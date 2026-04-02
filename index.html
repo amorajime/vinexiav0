@@ -326,8 +326,6 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      margin-top: 2px;
-      padding-left: 40px;
       flex-wrap: wrap;
     }
     .abv-pill {
@@ -409,27 +407,6 @@
 
     .campaign-select:focus { border-color: var(--ink); }
     .campaign-select.active { border-color: var(--ink); border-width: 2px; }
-    .unit-toggle {
-      display: inline-flex;
-      border: 1.5px solid var(--grey-light);
-      border-radius: 20px;
-      overflow: hidden;
-      background: var(--white);
-    }
-    .unit-btn {
-      border: 0;
-      background: transparent;
-      padding: 5px 12px;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--grey);
-      cursor: pointer;
-    }
-    .unit-btn.active {
-      background: var(--ink);
-      color: #fff;
-    }
 
     .date-range-label {
       font-size: 11px;
@@ -515,6 +492,13 @@
       font-size: 14px;
       font-weight: 600;
       margin-bottom: 4px;
+    }
+    .panel-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--grey);
+      margin-bottom: 8px;
+      margin-top: -2px;
     }
 
     .price-highlight {
@@ -687,26 +671,59 @@
       <strong>Solución:</strong> sube el .html a <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a> y ábrelo desde su URL.
     </div>
 
-    <!-- Chart -->
+    <!-- Filtros temporales (compartidos entre ambas gráficas) -->
+    <div class="date-filter-row">
+      <span class="filter-label">Periodo</span>
+      <button class="preset-btn" data-preset="4w">Últimas 4 sem.</button>
+      <button class="preset-btn" data-preset="3m">Últimos 3 meses</button>
+      <button class="preset-btn" data-preset="year">Este año</button>
+      <div class="divider-v"></div>
+      <span class="filter-label">Campaña</span>
+      <select class="campaign-select" id="campaign-select">
+        <option value="">— Seleccionar —</option>
+      </select>
+      <div class="divider-v"></div>
+      <button class="preset-btn active" data-preset="all">Todo el histórico</button>
+      <span class="date-range-label" id="date-range-label">Todo el histórico</span>
+    </div>
+
+    <!-- Tipo de vino (compartido: afecta a €/hl y €/hg) -->
+    <div class="chart-card" style="padding: 16px 24px;">
+      <div class="filters">
+        <span class="filter-label">Tipo</span>
+        <button class="f-btn on-all"  data-filter="ALL">Todos</button>
+        <button class="f-btn" data-filter="TINTO">Tinto</button>
+        <button class="f-btn" data-filter="BLANCO">Blanco</button>
+        <button class="f-btn" data-filter="MOSTO">Mosto</button>
+      </div>
+    </div>
+
+    <!-- Gráfica 1: hectolitros (ignora graduación; tinto = una línea agregada por semana) -->
     <div class="chart-card">
       <div class="chart-top">
         <div class="chart-top-left">
-          <h2>Evolución semanal del precio</h2>
-          <p id="chart-subtitle">€ por hectolitro · filtrado por tipo y año</p>
+          <h2>Precio por hectolitro</h2>
+          <p>€/hl · evolución semanal · tinto promediado si hay varias graduaciones en la misma semana</p>
         </div>
-        <div class="filters">
-          <span class="filter-label">Tipo</span>
-          <button class="f-btn on-all"  data-filter="ALL">Todos</button>
-          <button class="f-btn" data-filter="TINTO">Tinto</button>
-          <button class="f-btn" data-filter="BLANCO">Blanco</button>
-          <button class="f-btn" data-filter="MOSTO">Mosto</button>
-          <div class="divider-v"></div>
-          <span class="filter-label">Unidad</span>
-          <div class="unit-toggle" id="unit-toggle">
-            <button class="unit-btn active" data-unit="hl">€/hl</button>
-            <button class="unit-btn" data-unit="hg">€/hg</button>
-          </div>
-          <div class="sub-filter-group hidden abv-pill-row" id="abv-filter-wrap">
+      </div>
+      <div class="legend-row" id="legend-hl"></div>
+      <div id="loading-hl" class="loading">
+        <div class="spinner"></div>
+        Cargando datos
+      </div>
+      <canvas id="chart-hl" style="display:none"></canvas>
+    </div>
+
+    <!-- Gráfica 2: hectogrados (solo €/hg; filtro de graduación solo aquí) -->
+    <div class="chart-card">
+      <div class="chart-top">
+        <div class="chart-top-left">
+          <h2>Precio por hectogramo</h2>
+          <p>€/hg · evolución semanal · filtra por graduación (tinto)</p>
+        </div>
+        <div class="filters" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+          <div class="sub-filter-group hidden abv-pill-row" id="abv-filter-wrap" style="padding-left: 0; width: 100%;">
+            <span class="filter-label">Grado</span>
             <button class="abv-pill active" data-abv="ALL">Todos los grados</button>
             <button class="abv-pill" data-abv="11">11°</button>
             <button class="abv-pill" data-abv="13">13°</button>
@@ -714,30 +731,12 @@
           </div>
         </div>
       </div>
-
-      <!-- Date filter row -->
-      <div class="date-filter-row">
-        <span class="filter-label">Periodo</span>
-        <button class="preset-btn" data-preset="4w">Últimas 4 sem.</button>
-        <button class="preset-btn" data-preset="3m">Últimos 3 meses</button>
-        <button class="preset-btn" data-preset="year">Este año</button>
-        <div class="divider-v"></div>
-        <span class="filter-label">Campaña</span>
-        <select class="campaign-select" id="campaign-select">
-          <option value="">— Seleccionar —</option>
-        </select>
-        <div class="divider-v"></div>
-        <button class="preset-btn active" data-preset="all">Todo el histórico</button>
-        <span class="date-range-label" id="date-range-label">Todo el histórico</span>
-      </div>
-
-      <div class="legend-row" id="legend"></div>
-
-      <div id="loading" class="loading">
+      <div class="legend-row" id="legend-hg"></div>
+      <div id="loading-hg" class="loading">
         <div class="spinner"></div>
         Cargando datos
       </div>
-      <canvas id="chart" style="display:none"></canvas>
+      <canvas id="chart-hg" style="display:none"></canvas>
     </div>
 
   </div>
@@ -745,11 +744,23 @@
   <!-- ── Right panel ─────────────────────────────────────────────────────────── -->
   <aside class="right-panel">
     <div class="panel-title">Por tipo de vino</div>
+    <div class="panel-subtitle">€/hl · precio por hectolitro</div>
     <div class="wine-cards" id="wine-cards"></div>
 
     <div class="panel-divider"></div>
     <div class="panel-title">Últimas semanas</div>
+    <div class="panel-subtitle">€/hl</div>
     <div class="weeks-list" id="weeks-list"></div>
+
+    <div class="panel-divider"></div>
+    <div class="panel-title">Por tipo de vino</div>
+    <div class="panel-subtitle">€/hg · precio por hectogramo (filtros de grado aplican)</div>
+    <div class="wine-cards" id="wine-cards-hg"></div>
+
+    <div class="panel-divider"></div>
+    <div class="panel-title">Últimas semanas</div>
+    <div class="panel-subtitle">€/hg</div>
+    <div class="weeks-list" id="weeks-list-hg"></div>
   </aside>
 </div>
 
@@ -850,12 +861,12 @@
   let allData       = [];
   let activeFilter  = 'ALL';
   let activeAbv     = 'ALL';
-  let activeUnit    = 'hl';
   let activePreset  = 'all';   // 'all' | '4w' | '3m' | 'year' | 'campaign'
   let activeCampaign = null;   // ej. "2024/2025" o null
   // dateWindow: { minYear, minWeek, maxYear, maxWeek } or null = all
   let dateWindow    = null;
-  let chart         = null;
+  let chartHl       = null;
+  let chartHg       = null;
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   async function fetchData() {
@@ -881,7 +892,8 @@
       setPreset('all');
     } catch (e) {
       console.error(e);
-      document.getElementById('loading').style.display = 'none';
+      document.getElementById('loading-hl').style.display = 'none';
+      document.getElementById('loading-hg').style.display = 'none';
       document.getElementById('error-box').style.display = 'block';
     }
   }
@@ -971,9 +983,10 @@
     // Actualizar etiqueta de rango
     updateRangeLabel();
 
-    if (chart) { chart.destroy(); chart = null; }
+    if (chartHl) { chartHl.destroy(); chartHl = null; }
+    if (chartHg) { chartHg.destroy(); chartHg = null; }
     updatePanel();
-    renderChart();
+    renderCharts();
   }
 
   // ── Etiqueta de rango visible ─────────────────────────────────────────────────
@@ -996,16 +1009,44 @@
     return after && before;
   }
 
-  function getFiltered() {
-    return allData.filter(d => {
-      const typeMatch = activeFilter === 'ALL' || d.wine_type === activeFilter;
-      if (!rowInWindow(d) || !typeMatch) return false;
+  /** Fila base: tipo + ventana temporal (sin ABV). Para €/hl y agregación. */
+  function rowMatchesTypeAndTime(d) {
+    const typeMatch = activeFilter === 'ALL' || d.wine_type === activeFilter;
+    return rowInWindow(d) && typeMatch;
+  }
 
-      if (activeFilter !== 'TINTO' || activeAbv === 'ALL') return true;
+  /** Solo gráfica €/hg y panel derecho coherente con hg: incluye filtro ABV en Tinto. */
+  function getFilteredHg() {
+    return allData.filter(d => {
+      if (!rowMatchesTypeAndTime(d)) return false;
+      if (d.wine_type !== 'TINTO' || activeAbv === 'ALL') return true;
       const abv = parseEuropeanNumber(d.abv);
       if (abv === null) return false;
       return Math.round(abv) === Number(activeAbv);
     });
+  }
+
+  /** Promedia €/hl por (tipo, año, semana) para una sola línea de tinto por semana. */
+  function aggregateHlByWeek() {
+    const map = new Map();
+    for (const d of allData) {
+      if (!rowMatchesTypeAndTime(d)) continue;
+      const v = parseEuropeanNumber(d.price_eur_hl);
+      if (v === null) continue;
+      const key = `${d.wine_type}|${d.year}|${d.week}`;
+      if (!map.has(key)) {
+        map.set(key, { wine_type: d.wine_type, year: d.year, week: d.week, sum: 0, n: 0 });
+      }
+      const b = map.get(key);
+      b.sum += v;
+      b.n += 1;
+    }
+    return [...map.values()].map(b => ({
+      wine_type: b.wine_type,
+      year: b.year,
+      week: b.week,
+      price_eur_hl: b.sum / b.n,
+    }));
   }
 
   function parseEuropeanNumber(value) {
@@ -1016,22 +1057,42 @@
     return Number.isFinite(parsed) ? parsed : null;
   }
 
-  function getUnitLabel() {
-    return activeUnit === 'hg' ? '€/hg' : '€/hl';
+  function priceHl(row) {
+    return parseEuropeanNumber(row.price_eur_hl);
   }
 
-  function getActivePriceValue(row) {
-    const source = activeUnit === 'hg' ? row.price_eur_hg : row.price_eur_hl;
-    return parseEuropeanNumber(source);
+  function priceHg(row) {
+    return parseEuropeanNumber(row.price_eur_hg);
   }
 
-  function getNumericPrices(rows) {
-    return rows.map(getActivePriceValue).filter(v => v !== null);
+  function getNumericHlPrices(rows) {
+    return rows.map(priceHl).filter(v => v !== null);
   }
 
-  function avgOf(data, type) {
-    const vals = getNumericPrices(data.filter(d => d.wine_type === type));
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  function getNumericHgPrices(rows) {
+    return rows.map(priceHg).filter(v => v !== null);
+  }
+
+  /** Promedia €/hg por (tipo, año, semana) según filtros actuales (incl. grado en tinto). */
+  function aggregateHgByWeek() {
+    const map = new Map();
+    for (const d of getFilteredHg()) {
+      const v = parseEuropeanNumber(d.price_eur_hg);
+      if (v === null) continue;
+      const key = `${d.wine_type}|${d.year}|${d.week}`;
+      if (!map.has(key)) {
+        map.set(key, { wine_type: d.wine_type, year: d.year, week: d.week, sum: 0, n: 0 });
+      }
+      const b = map.get(key);
+      b.sum += v;
+      b.n += 1;
+    }
+    return [...map.values()].map(b => ({
+      wine_type: b.wine_type,
+      year: b.year,
+      week: b.week,
+      price_eur_hg: b.sum / b.n,
+    }));
   }
 
   // ── Right panel ───────────────────────────────────────────────────────────────
@@ -1041,36 +1102,25 @@
     MOSTO:  { label: 'Mosto',  emoji: '🍇', color: '#7C3AED', dotColor: '#7C3AED', bgVar: 'var(--mosto-bg)' },
   };
 
-  function updatePanel() {
-    const filtered = getFiltered();
-    if (!filtered.length) {
-      document.getElementById('wine-cards').innerHTML = '';
-      document.getElementById('weeks-list').innerHTML = '';
-      return;
-    }
-
-    // Determinar qué tipos mostrar según el filtro activo
+  function buildWineCardsHtml(rows, priceFn, unitLabel) {
     const typesToShow = activeFilter === 'ALL'
       ? ['TINTO', 'BLANCO', 'MOSTO']
       : [activeFilter];
 
-    // ── Wine cards ──────────────────────────────────────────────────────────────
-    const cardsHTML = typesToShow.map(type => {
+    return typesToShow.map(type => {
       const meta = TYPE_META[type];
-      const rows = filtered
+      const typeRows = rows
         .filter(d => d.wine_type === type)
         .sort((a, b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
 
-      if (!rows.length) return '';
+      if (!typeRows.length) return '';
 
-      // Precio medio
-      const prices = getNumericPrices(rows);
+      const prices = typeRows.map(priceFn).filter(v => v !== null);
       if (!prices.length) return '';
       const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
 
-      // Cambio porcentual (primera → última observación en la selección)
-      const first = getActivePriceValue(rows[0]);
-      const last  = getActivePriceValue(rows[rows.length - 1]);
+      const first = priceFn(typeRows[0]);
+      const last  = priceFn(typeRows[typeRows.length - 1]);
       if (first === null || last === null || first === 0) return '';
       const pct   = ((last - first) / first) * 100;
       const isUp  = pct > 0.05;
@@ -1089,7 +1139,7 @@
             <span class="wine-card-pct ${pctClass}">${pctLabel}</span>
           </div>
           <div class="wine-card-price">${avg.toFixed(2)} €</div>
-          <div class="wine-card-sub">precio medio ${getUnitLabel()}</div>
+          <div class="wine-card-sub">precio medio ${unitLabel}</div>
           <div class="wine-card-range">
             <span>${first.toFixed(2)} €</span>
             →
@@ -1097,11 +1147,10 @@
           </div>
         </div>`;
     }).join('');
+  }
 
-    document.getElementById('wine-cards').innerHTML = cardsHTML;
-
-    // ── Últimas semanas ─────────────────────────────────────────────────────────
-    const sortedDesc = [...filtered].sort((a, b) =>
+  function buildRecentWeeksHtml(rows, priceFn, unitLabel) {
+    const sortedDesc = [...rows].sort((a, b) =>
       b.year !== a.year ? b.year - a.year : b.week - a.week
     );
     const seenWeeks = new Set();
@@ -1110,22 +1159,41 @@
       const key = `${d.year}-${d.week}`;
       if (seenWeeks.has(key)) continue;
       seenWeeks.add(key);
-      const rows = filtered.filter(r => r.year === d.year && r.week === d.week);
-      const values = getNumericPrices(rows);
+      const weekRows = rows.filter(r => r.year === d.year && r.week === d.week);
+      const values = weekRows.map(priceFn).filter(v => v !== null);
       if (!values.length) continue;
-      const avg  = values.reduce((a, b) => a + b, 0) / values.length;
+      const avg = values.reduce((a, b) => a + b, 0) / values.length;
       recentWeeks.push({ week: d.week, year: d.year, avg });
       if (recentWeeks.length >= 5) break;
     }
 
-    document.getElementById('weeks-list').innerHTML = recentWeeks.map(({ week, year, avg }) => {
+    return recentWeeks.map(({ week, year, avg }) => {
       const dateStr = fmtDate(isoWeekToDate(parseInt(year), parseInt(week)).getTime(), true);
       return `
         <div class="week-row">
           <span class="wlabel">${dateStr}</span>
-          <span class="wval">${avg.toFixed(2)} ${getUnitLabel()}</span>
+          <span class="wval">${avg.toFixed(2)} ${unitLabel}</span>
         </div>`;
     }).join('');
+  }
+
+  function updatePanel() {
+    const hlRows = aggregateHlByWeek();
+    const hgRows = aggregateHgByWeek();
+
+    document.getElementById('wine-cards').innerHTML = hlRows.length
+      ? buildWineCardsHtml(hlRows, priceHl, '€/hl')
+      : '';
+    document.getElementById('weeks-list').innerHTML = hlRows.length
+      ? buildRecentWeeksHtml(hlRows, priceHl, '€/hl')
+      : '';
+
+    document.getElementById('wine-cards-hg').innerHTML = hgRows.length
+      ? buildWineCardsHtml(hgRows, priceHg, '€/hg')
+      : '';
+    document.getElementById('weeks-list-hg').innerHTML = hgRows.length
+      ? buildRecentWeeksHtml(hgRows, priceHg, '€/hg')
+      : '';
   }
 
   // ── Conversión semana ISO → fecha ─────────────────────────────────────────────
@@ -1148,31 +1216,34 @@
     return showYear ? `${base} ${d.getFullYear()}` : base;
   }
 
-  // ── Datasets ──────────────────────────────────────────────────────────────────
-  function buildDatasets() {
-    const types    = activeFilter === 'ALL' ? ['TINTO', 'BLANCO', 'MOSTO'] : [activeFilter];
-    const filtered = getFiltered();
-    const years    = [...new Set(filtered.map(d => String(d.year)))].sort();
+  // ── Datasets €/hl (agregado por semana; sin ABV) ───────────────────────────────
+  function buildHlDatasets() {
+    const raw = aggregateHlByWeek();
+    const types = activeFilter === 'ALL' ? ['TINTO', 'BLANCO', 'MOSTO'] : [activeFilter];
+    const years = [...new Set(raw.map(d => String(d.year)))].sort();
     const datasets = [];
 
-    types.forEach(type => {
-      const color  = (TYPE_COLOR[type] || ['#888'])[0];
+    function buildPoints(rows, priceFn) {
       const points = [];
-
       years.forEach(year => {
-        filtered
-          .filter(d => d.wine_type === type && String(d.year) === year)
+        rows
+          .filter(d => String(d.year) === year)
           .sort((a, b) => a.week - b.week)
           .forEach(d => {
             const ts = isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime();
-            const yVal = getActivePriceValue(d);
+            const yVal = priceFn(d);
             if (yVal === null) return;
             points.push({ x: ts, y: yVal, week: d.week, year: d.year });
           });
       });
+      return points;
+    }
 
+    types.forEach(type => {
+      const rows = raw.filter(d => d.wine_type === type);
+      const points = buildPoints(rows, priceHl);
       if (!points.length) return;
-
+      const color = (TYPE_COLOR[type] || ['#888'])[0];
       datasets.push({
         label: `${type[0] + type.slice(1).toLowerCase()}`,
         data: points,
@@ -1192,59 +1263,117 @@
     return { datasets, years };
   }
 
-  function buildLegend(datasets) {
-    document.getElementById('legend').innerHTML = datasets.map(ds => `
+  // ── Datasets €/hg (solo price_eur_hg; ABV en tinto) ────────────────────────────
+  function buildHgDatasets() {
+    const filtered = getFilteredHg();
+    const types = activeFilter === 'ALL' ? ['TINTO', 'BLANCO', 'MOSTO'] : [activeFilter];
+    const years = [...new Set(filtered.map(d => String(d.year)))].sort();
+    const datasets = [];
+
+    function buildPoints(rows) {
+      const points = [];
+      years.forEach(year => {
+        rows
+          .filter(d => String(d.year) === year)
+          .sort((a, b) => a.week - b.week)
+          .forEach(d => {
+            const ts = isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime();
+            const yVal = priceHg(d);
+            if (yVal === null) return;
+            points.push({ x: ts, y: yVal, week: d.week, year: d.year });
+          });
+      });
+      return points;
+    }
+
+    types.forEach(type => {
+      if (type === 'TINTO' && activeAbv === 'ALL') {
+        const tintoRows = filtered.filter(d => d.wine_type === 'TINTO');
+        const abvValues = [...new Set(
+          tintoRows
+            .map(d => parseEuropeanNumber(d.abv))
+            .filter(v => v !== null)
+            .map(v => Math.round(v))
+        )].sort((a, b) => a - b);
+
+        abvValues.forEach((abvValue, idx) => {
+          const rows = tintoRows.filter(d => {
+            const abv = parseEuropeanNumber(d.abv);
+            return abv !== null && Math.round(abv) === abvValue;
+          });
+          const points = buildPoints(rows);
+          if (!points.length) return;
+          const color = (TYPE_COLOR.TINTO || ['#C0392B'])[idx % (TYPE_COLOR.TINTO || ['#C0392B']).length];
+          datasets.push({
+            label: `Tinto ${abvValue}°`,
+            data: points,
+            borderColor: color,
+            backgroundColor: color + '15',
+            pointBackgroundColor: color,
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointHoverRadius: 7,
+            tension: 0.4,
+            fill: false,
+            _type: 'TINTO',
+            _years: years,
+          });
+        });
+        return;
+      }
+
+      const rows = filtered.filter(d => d.wine_type === type);
+      const points = buildPoints(rows);
+      if (!points.length) return;
+      const color = (TYPE_COLOR[type] || ['#888'])[0];
+      const baseLabel = `${type[0] + type.slice(1).toLowerCase()}`;
+      const label = type === 'TINTO' && activeAbv !== 'ALL' ? `${baseLabel} ${activeAbv}°` : baseLabel;
+
+      datasets.push({
+        label,
+        data: points,
+        borderColor: color,
+        backgroundColor: color + '15',
+        pointBackgroundColor: color,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 7,
+        tension: 0.4,
+        fill: false,
+        _type: type,
+        _years: years,
+      });
+    });
+
+    return { datasets, years };
+  }
+
+  function buildLegendHtml(datasets, legendElId) {
+    document.getElementById(legendElId).innerHTML = datasets.map(ds => `
       <div class="leg-item">
         <div class="leg-dot" style="background:${ds.borderColor}"></div>
         <span>${ds.label}</span>
       </div>`).join('');
   }
 
-  // ── Chart ─────────────────────────────────────────────────────────────────────
-  function renderChart() {
-    const { datasets, years } = buildDatasets();
-    buildLegend(datasets);
-    const loadingEl = document.getElementById('loading');
-    const canvas = document.getElementById('chart');
-
-    if (chart) { chart.destroy(); chart = null; }
-    if (!datasets.length) {
-      loadingEl.innerHTML = '<div class="spinner"></div>Sin datos para los filtros seleccionados';
-      loadingEl.style.display = 'flex';
-      canvas.style.display = 'none';
-      return;
-    }
-
-    loadingEl.style.display = 'none';
-    canvas.style.display = 'block';
-
-    // Calcular rango de tiempo de los datos visibles
+  function createLineChart(canvas, datasets, years, yAxisTitle, tooltipUnit) {
     const allTs = datasets.flatMap(ds => ds.data.map(p => p.x));
     const minTs = Math.min(...allTs);
     const maxTs = Math.max(...allTs);
     const spanDays = (maxTs - minTs) / 86400000;
 
-    // Decidir granularidad de los ticks según el span visible
-    // < 60 días → mostrar cada semana ("3 feb")
-    // < 180 días → cada 2 semanas
-    // < 400 días → mensual ("feb 2025")
-    // ≥ 400 días → cada 2 meses
-    let tickInterval, tickFmt;
+    let tickFmt;
     if (spanDays < 60) {
-      tickInterval = 7 * 24 * 3600000;
       tickFmt = ts => fmtDate(ts, false);
     } else if (spanDays < 180) {
-      tickInterval = 14 * 24 * 3600000;
       tickFmt = ts => fmtDate(ts, false);
     } else if (spanDays < 400) {
-      tickInterval = 30 * 24 * 3600000;
       tickFmt = ts => {
         const d = new Date(ts);
         const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
         return `${months[d.getMonth()]} ${d.getFullYear()}`;
       };
     } else {
-      tickInterval = 60 * 24 * 3600000;
       tickFmt = ts => {
         const d = new Date(ts);
         const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -1252,7 +1381,7 @@
       };
     }
 
-    chart = new Chart(canvas, {
+    return new Chart(canvas, {
       type: 'line',
       data: { datasets },
       options: {
@@ -1275,7 +1404,7 @@
                 const raw = items[0].raw;
                 return fmtDate(raw.x, true) + ` · Sem. ${raw.week}`;
               },
-              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} ${getUnitLabel()}`,
+              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} ${tooltipUnit}`,
             }
           },
           yearLines: { id: 'yearLines' }
@@ -1284,7 +1413,7 @@
           x: {
             type: 'linear',
             min: minTs,
-            max: maxTs + 7 * 86400000, // un poco de margen
+            max: maxTs + 7 * 86400000,
             ticks: {
               font: { family: 'Inter', size: 10 },
               color: '#9CA3AF',
@@ -1297,7 +1426,6 @@
             },
             grid: {
               color: ctx => {
-                // Marcar el 1 de enero con línea más oscura
                 const d = new Date(ctx.tick.value);
                 return (d.getMonth() === 0 && d.getDate() <= 7) ? '#D1D5DB' : '#F3F4F6';
               },
@@ -1310,7 +1438,7 @@
           },
           y: {
             title: {
-              display: true, text: activeUnit === 'hg' ? '€ / hg' : '€ / hl',
+              display: true, text: yAxisTitle,
               font: { family: 'Inter', size: 11 }, color: '#9CA3AF',
             },
             ticks: {
@@ -1323,25 +1451,64 @@
         }
       }
     });
+  }
 
-    chart._vinexiaYears = years;
+  function renderOneChart({ buildFn, canvasId, loadingId, legendId, yTitle, tooltipUnit, chartRef }) {
+    const { datasets, years } = buildFn();
+    buildLegendHtml(datasets, legendId);
+    const loadingEl = document.getElementById(loadingId);
+    const canvas = document.getElementById(canvasId);
+
+    if (chartRef === 'hl' && chartHl) { chartHl.destroy(); chartHl = null; }
+    if (chartRef === 'hg' && chartHg) { chartHg.destroy(); chartHg = null; }
+
+    if (!datasets.length) {
+      loadingEl.innerHTML = '<div class="spinner"></div>Sin datos para los filtros seleccionados';
+      loadingEl.style.display = 'flex';
+      canvas.style.display = 'none';
+      return;
+    }
+
+    loadingEl.style.display = 'none';
+    canvas.style.display = 'block';
+
+    const ch = createLineChart(canvas, datasets, years, yTitle, tooltipUnit);
+    ch._vinexiaYears = years;
+    if (chartRef === 'hl') chartHl = ch;
+    else chartHg = ch;
+  }
+
+  function renderCharts() {
+    renderOneChart({
+      buildFn: buildHlDatasets,
+      canvasId: 'chart-hl',
+      loadingId: 'loading-hl',
+      legendId: 'legend-hl',
+      yTitle: '€ / hl',
+      tooltipUnit: '€/hl',
+      chartRef: 'hl',
+    });
+    renderOneChart({
+      buildFn: buildHgDatasets,
+      canvasId: 'chart-hg',
+      loadingId: 'loading-hg',
+      legendId: 'legend-hg',
+      yTitle: '€ / hg',
+      tooltipUnit: '€/hg',
+      chartRef: 'hg',
+    });
   }
 
   // ── Botones tipo ──────────────────────────────────────────────────────────────
   function syncAbvFilterVisibility() {
     const wrap = document.getElementById('abv-filter-wrap');
-    wrap.classList.toggle('hidden', activeFilter !== 'TINTO');
-  }
-
-  function updateDynamicUnitLabels() {
-    document.getElementById('chart-subtitle').textContent =
-      `${activeUnit === 'hg' ? '€ por hectogramo' : '€ por hectolitro'} · filtrado por tipo y año`;
+    wrap.classList.toggle('hidden', !(activeFilter === 'TINTO' || activeFilter === 'ALL'));
   }
 
   document.querySelectorAll('.f-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
-      if (activeFilter !== 'TINTO') {
+      if (!(activeFilter === 'TINTO' || activeFilter === 'ALL')) {
         activeAbv = 'ALL';
         document.querySelectorAll('.abv-pill').forEach(p => p.classList.toggle('active', p.dataset.abv === 'ALL'));
       }
@@ -1351,8 +1518,9 @@
       const cls = { ALL: 'on-all', TINTO: 'on-tinto', BLANCO: 'on-blanco', MOSTO: 'on-mosto' }[activeFilter];
       btn.classList.add(cls);
       syncAbvFilterVisibility();
-      if (chart) { chart.destroy(); chart = null; }
-      updatePanel(); renderChart();
+      if (chartHl) { chartHl.destroy(); chartHl = null; }
+      if (chartHg) { chartHg.destroy(); chartHg = null; }
+      updatePanel(); renderCharts();
     });
   });
 
@@ -1361,19 +1529,8 @@
     pill.addEventListener('click', () => {
       activeAbv = pill.dataset.abv;
       document.querySelectorAll('.abv-pill').forEach(p => p.classList.toggle('active', p === pill));
-      if (chart) { chart.destroy(); chart = null; }
-      updatePanel(); renderChart();
-    });
-  });
-
-  // ── Toggle unidad ─────────────────────────────────────────────────────────────
-  document.querySelectorAll('.unit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeUnit = btn.dataset.unit;
-      document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('active', b === btn));
-      updateDynamicUnitLabels();
-      if (chart) { chart.destroy(); chart = null; }
-      updatePanel(); renderChart();
+      if (chartHg) { chartHg.destroy(); chartHg = null; }
+      updatePanel(); renderCharts();
     });
   });
 
@@ -1383,7 +1540,6 @@
   });
 
   syncAbvFilterVisibility();
-  updateDynamicUnitLabels();
   init();
 </script>
 </body>
