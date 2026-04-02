@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinexia — Índice de Precios</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sidebar-w: 220px;
+      --topbar-h: 60px;
+      --bg: #F7F8FA;
+      --white: #FFFFFF;
+      --ink: #111827;
+      --grey: #6B7280;
+      --grey-light: #E5E7EB;
+      --tinto:  #C0392B;
+      --tinto-bg: #FDF2F2;
+      --blanco: #D4922A;
+      --blanco-bg: #FEF9EE;
+      --mosto:  #7C3AED;
+      --mosto-bg: #F5F0FF;
+      --green:  #10B981;
+      --green-bg: #ECFDF5;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      display: flex;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--white);
+      border-right: 1px solid var(--grey-light);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--grey-light);
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: var(--ink);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span { color: var(--tinto); }
+
+    .sidebar-nav {
+      padding: 16px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--grey);
+      padding: 10px 8px 6px;
+      margin-top: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--grey);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .nav-item:hover { background: var(--bg); color: var(--ink); }
+
+    .nav-item.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .nav-item svg { flex-shrink: 0; opacity: 0.85; }
+
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--grey-light);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    /* ── Topbar ──────────────────────────────────────────────────────────────── */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: var(--sidebar-w);
+      right: 0;
+      height: var(--topbar-h);
+      background: var(--white);
+      border-bottom: 1px solid var(--grey-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 99;
+    }
+
+    .topbar-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar-badge {
+      font-size: 12px;
+      color: var(--grey);
+      background: var(--bg);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--grey-light);
+      font-weight: 500;
+    }
+
+    .avatar {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--tinto), #E05C4B);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────────────────────── */
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      margin-top: var(--topbar-h);
+      flex: 1;
+      display: flex;
+      min-height: calc(100vh - var(--topbar-h));
+    }
+
+    .content {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    .right-panel {
+      width: 280px;
+      flex-shrink: 0;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-left: 1px solid var(--grey-light);
+      background: var(--white);
+    }
+
+    /* ── Wine type cards (right panel) ──────────────────────────────────────── */
+    .wine-cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .wine-card {
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 1px solid var(--grey-light);
+      background: var(--white);
+    }
+
+    .wine-card-header { display: flex; align-items: center; justify-content: space-between; }
+
+    .wine-card-name {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 600;
+    }
+
+    .wine-card-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    .wine-card-pct {
+      font-size: 11.5px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .wine-card-pct.up   { background: var(--green-bg); color: var(--green); }
+    .wine-card-pct.down { background: var(--tinto-bg); color: var(--tinto); }
+    .wine-card-pct.flat { background: var(--bg);       color: var(--grey);  }
+
+    .wine-card-price {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: -0.5px; line-height: 1;
+    }
+
+    .wine-card-sub { font-size: 11px; color: var(--grey); margin-top: -4px; }
+
+    .wine-card-range {
+      font-size: 11px; color: var(--grey);
+      display: flex; gap: 4px; align-items: center;
+    }
+    .wine-card-range span {
+      background: var(--bg); padding: 2px 7px;
+      border-radius: 6px; font-weight: 500; color: var(--ink);
+    }
+
+    /* ── Chart card ──────────────────────────────────────────────────────────── */
+    .chart-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 22px 24px 18px;
+      flex: 1;
+    }
+
+    .chart-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .chart-top-left h2 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .chart-top-left p {
+      font-size: 12px;
+      color: var(--grey);
+      margin-top: 2px;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      color: var(--grey);
+      font-weight: 500;
+      margin-right: 2px;
+    }
+
+    .f-btn {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid var(--grey-light);
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: var(--grey);
+    }
+
+    .f-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .f-btn.on-all    { background: var(--ink);    border-color: var(--ink);    color: #fff; }
+    .f-btn.on-tinto  { background: var(--tinto);  border-color: var(--tinto);  color: #fff; }
+    .f-btn.on-blanco { background: var(--blanco); border-color: var(--blanco); color: #fff; }
+    .f-btn.on-mosto  { background: var(--mosto);  border-color: var(--mosto);  color: #fff; }
+
+    .divider-v {
+      width: 1px; height: 18px;
+      background: var(--grey-light);
+      margin: 0 2px;
+    }
+
+    /* ── Date filter row ─────────────────────────────────────────────────────── */
+    .date-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--grey-light);
+      background: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: var(--grey);
+      white-space: nowrap;
+    }
+
+    .preset-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .preset-btn.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .campaign-select {
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1.5px solid var(--grey-light);
+      background: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s ease;
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 28px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .campaign-select:focus { border-color: var(--ink); }
+    .campaign-select.active { border-color: var(--ink); border-width: 2px; }
+
+    .date-range-label {
+      font-size: 11px;
+      color: var(--grey);
+      background: var(--white);
+      border: 1px solid var(--grey-light);
+      border-radius: 6px;
+      padding: 4px 10px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .year-check {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 500; color: var(--grey);
+      cursor: pointer;
+    }
+
+    .year-check input {
+      accent-color: var(--tinto);
+      width: 13px; height: 13px;
+      cursor: pointer;
+    }
+
+    /* Legend row */
+    .legend-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .leg-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--grey);
+    }
+
+    .leg-dot {
+      width: 22px; height: 3px;
+      border-radius: 3px;
+    }
+
+    /* Loading / error */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      height: 260px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--grey);
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--grey-light);
+      border-top-color: var(--tinto);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      display: none;
+      background: #FFF5F5;
+      border: 1px solid #FECACA;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--tinto);
+      margin-bottom: 4px;
+    }
+
+    .error-box strong { display: block; font-weight: 600; margin-bottom: 3px; }
+    .error-box a { color: var(--tinto); }
+    .error-box code { background: #fde8e8; padding: 1px 5px; border-radius: 3px; }
+
+    canvas { max-height: 320px; }
+
+    /* ── Right panel ─────────────────────────────────────────────────────────── */
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .price-highlight {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .price-highlight .big {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .price-highlight .sub {
+      font-size: 12px;
+      color: var(--grey);
+    }
+
+    .price-highlight .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-top: 2px;
+      width: fit-content;
+    }
+
+    .badge.up   { background: var(--green-bg);  color: var(--green); }
+    .badge.down { background: var(--tinto-bg);   color: var(--tinto); }
+
+    .type-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+    }
+
+    .breakdown-header .name { font-weight: 500; }
+    .breakdown-header .val  { font-weight: 600; }
+
+    .bar-track {
+      height: 6px;
+      background: var(--grey-light);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .bar-tinto  { background: var(--tinto); }
+    .bar-blanco { background: var(--blanco); }
+    .bar-mosto  { background: var(--mosto); }
+
+    .panel-divider {
+      height: 1px;
+      background: var(--grey-light);
+      margin: 4px 0;
+    }
+
+    .weeks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .week-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .week-row .wlabel { color: var(--grey); }
+    .week-row .wval   { font-weight: 600; }
+
+    /* ── Animations ──────────────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .chart-card { animation: fadeUp 0.4s 0.12s ease both; }
+    .right-panel > * { animation: fadeUp 0.4s 0.18s ease both; }
+
+    /* ── Responsive ──────────────────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .right-panel { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-wrap { margin-left: 0; }
+      .topbar { left: 0; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">V</div>
+    <div class="logo-text">Vine<span>xia</span></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="nav-item active">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
+      Índice
+    </a>
+    <a class="nav-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/><path d="M12 5v2"/></svg>
+      Añadir datos
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a class="nav-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Ajustes
+    </a>
+  </div>
+</aside>
+
+<!-- ── Topbar ──────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-title">Dashboard de precios</div>
+  <div class="topbar-right">
+    <span class="topbar-badge" id="topbar-week">Semana — · —</span>
+    <div class="avatar">VX</div>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<div class="main-wrap">
+  <div class="content">
+
+    <!-- Error -->
+    <div id="error-box" class="error-box">
+      <strong>⚠ Error al conectar con Supabase</strong>
+      Si abres el archivo como <code>file://</code>, el navegador bloquea las peticiones de red (CORS).<br>
+      <strong>Solución:</strong> sube el .html a <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a> y ábrelo desde su URL.
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-top">
+        <div class="chart-top-left">
+          <h2>Evolución semanal del precio</h2>
+          <p>€ por hectolitro · filtrado por tipo y año</p>
+        </div>
+        <div class="filters">
+          <span class="filter-label">Tipo</span>
+          <button class="f-btn on-all"  data-filter="ALL">Todos</button>
+          <button class="f-btn" data-filter="TINTO">Tinto</button>
+          <button class="f-btn" data-filter="BLANCO">Blanco</button>
+          <button class="f-btn" data-filter="MOSTO">Mosto</button>
+        </div>
+      </div>
+
+      <!-- Date filter row -->
+      <div class="date-filter-row">
+        <span class="filter-label">Periodo</span>
+        <button class="preset-btn" data-preset="4w">Últimas 4 sem.</button>
+        <button class="preset-btn" data-preset="3m">Últimos 3 meses</button>
+        <button class="preset-btn" data-preset="year">Este año</button>
+        <div class="divider-v"></div>
+        <span class="filter-label">Campaña</span>
+        <select class="campaign-select" id="campaign-select">
+          <option value="">— Seleccionar —</option>
+        </select>
+        <div class="divider-v"></div>
+        <button class="preset-btn active" data-preset="all">Todo el histórico</button>
+        <span class="date-range-label" id="date-range-label">Todo el histórico</span>
+      </div>
+
+      <div class="legend-row" id="legend"></div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        Cargando datos
+      </div>
+      <canvas id="chart" style="display:none"></canvas>
+    </div>
+
+  </div>
+
+  <!-- ── Right panel ─────────────────────────────────────────────────────────── -->
+  <aside class="right-panel">
+    <div class="panel-title">Por tipo de vino</div>
+    <div class="wine-cards" id="wine-cards"></div>
+
+    <div class="panel-divider"></div>
+    <div class="panel-title">Últimas semanas</div>
+    <div class="weeks-list" id="weeks-list"></div>
+  </aside>
+</div>
+
+<script>
+  // ── Plugin: líneas verticales al inicio de cada año ──────────────────────────
+  Chart.register({
+    id: 'yearLines',
+    afterDraw(chartInstance) {
+      const { ctx, scales: { x, y } } = chartInstance;
+      const years = chartInstance._vinexiaYears || [];
+      if (years.length <= 1) return;
+
+      years.forEach((yr, i) => {
+        if (i === 0) return; // el primer año no lleva línea
+        const jan1ts = new Date(parseInt(yr), 0, 1).getTime();
+        if (jan1ts < x.min || jan1ts > x.max) return;
+
+        const xPx = x.getPixelForValue(jan1ts);
+
+        // Línea vertical discontinua
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(xPx, y.top);
+        ctx.lineTo(xPx, y.bottom);
+        ctx.strokeStyle = '#9CA3AF';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.restore();
+
+        // Etiqueta del año encima de la línea
+        ctx.save();
+        ctx.fillStyle = '#6B7280';
+        ctx.font = '600 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(yr, xPx, y.top - 6);
+        ctx.restore();
+      });
+
+      // Etiqueta del primer año (alineada a la izquierda)
+      if (years[0]) {
+        const firstTs = x.min;
+        const xPx = x.getPixelForValue(firstTs);
+        ctx.save();
+        ctx.fillStyle = '#6B7280';
+        ctx.font = '600 11px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(years[0], xPx + 4, y.top - 6);
+        ctx.restore();
+      }
+    }
+  });
+
+  // ── Semana de calendario actual ───────────────────────────────────────────────
+  function getCurrentCalendarWeek() {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+    const week = Math.ceil((dayOfYear + startOfYear.getDay() + 1) / 7);
+    return { week, year: now.getFullYear() };
+  }
+
+  // ── Config Supabase ───────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://ztteligyldpedbilvoev.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dGVsaWd5bGRwZWRiaWx2b2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0ODk5NjUsImV4cCI6MjA4NzA2NTk2NX0.YYq7lCufarLYNX0f5eRG4h6QKmfjhFZYufUFePVG0bs';
+  const TABLE = 'VinexiaV0';
+
+  // ── Paleta ────────────────────────────────────────────────────────────────────
+  const TYPE_COLOR = {
+    TINTO:  ['#C0392B', '#E87060', '#8B1A1A'],
+    BLANCO: ['#D4922A', '#F0B860', '#A06010'],
+    MOSTO:  ['#7C3AED', '#A87EF5', '#5020B0'],
+  };
+
+  // ── Campaña agrícola: Agosto → Julio ─────────────────────────────────────────
+  // Semana ISO aproximada del inicio de agosto (~sem 31) y fin de julio (~sem 30)
+  const CAMPAIGN_START_WEEK = 31; // ~1 agosto
+  const CAMPAIGN_START_MONTH = 7; // agosto (0-indexed)
+
+  // Devuelve la campaña a la que pertenece un (year, week)
+  // ej: year=2024, week=35 → "2024/2025"; year=2025, week=5 → "2024/2025"
+  function getCampaignKey(year, week) {
+    const y = parseInt(year);
+    if (week >= CAMPAIGN_START_WEEK) return `${y}/${y + 1}`;
+    return `${y - 1}/${y}`;
+  }
+
+  // Dado una campaña "2024/2025", devuelve { minYear, minWeek, maxYear, maxWeek }
+  function campaignToBounds(key) {
+    const [startY] = key.split('/').map(Number);
+    return {
+      minYear: startY, minWeek: CAMPAIGN_START_WEEK,
+      maxYear: startY + 1, maxWeek: CAMPAIGN_START_WEEK - 1,
+    };
+  }
+
+  // ── Estado ────────────────────────────────────────────────────────────────────
+  let allData       = [];
+  let activeFilter  = 'ALL';
+  let activePreset  = 'all';   // 'all' | '4w' | '3m' | 'year' | 'campaign'
+  let activeCampaign = null;   // ej. "2024/2025" o null
+  // dateWindow: { minYear, minWeek, maxYear, maxWeek } or null = all
+  let dateWindow    = null;
+  let chart         = null;
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  async function fetchData() {
+    const url = `${SUPABASE_URL}/rest/v1/${TABLE}?select=week,year,wine_type,price_eur_hl&order=year.asc,week.asc`;
+    const res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const raw = await fetchData();
+      allData = raw.filter(d => d.year !== null && d.price_eur_hl !== null);
+
+      // Semana de calendario real
+      const { week: calWeek, year: calYear } = getCurrentCalendarWeek();
+      document.getElementById('topbar-week').textContent = `Semana ${calWeek} de ${calYear}`;
+
+      buildCampaignSelector();
+      setPreset('all');
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-box').style.display = 'block';
+    }
+  }
+
+  // ── Construir selector de campaña ─────────────────────────────────────────────
+  function buildCampaignSelector() {
+    const campaigns = new Set();
+    allData.forEach(d => campaigns.add(getCampaignKey(d.year, d.week)));
+    const sorted = [...campaigns].sort();
+
+    const sel = document.getElementById('campaign-select');
+    sorted.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = `Campaña ${c}`;
+      sel.appendChild(opt);
+    });
+
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      activeCampaign = sel.value;
+      setPreset('campaign');
+    });
+  }
+
+  // ── Aplicar preset ────────────────────────────────────────────────────────────
+  function setPreset(preset) {
+    activePreset = preset;
+
+    // Resetear select de campaña si no es ese preset
+    const sel = document.getElementById('campaign-select');
+    if (preset !== 'campaign') {
+      sel.value = '';
+      sel.classList.remove('active');
+    } else {
+      sel.classList.add('active');
+    }
+
+    // Calcular dateWindow según preset
+    const now = new Date();
+    const { week: nowWeek, year: nowYear } = getCurrentCalendarWeek();
+
+    if (preset === 'all') {
+      dateWindow = null;
+
+    } else if (preset === '4w') {
+      let minWeek = nowWeek - 4;
+      let minYear = nowYear;
+      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
+      dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
+
+    } else if (preset === '3m') {
+      let minWeek = nowWeek - 13;
+      let minYear = nowYear;
+      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
+      dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
+
+    } else if (preset === 'year') {
+      dateWindow = { minYear: nowYear, minWeek: 1, maxYear: nowYear, maxWeek: 52 };
+
+    } else if (preset === 'campaign') {
+      if (!activeCampaign) { dateWindow = null; }
+      else { dateWindow = campaignToBounds(activeCampaign); }
+
+    } else if (preset === 'current-campaign') {
+      const currentCampaign = getCampaignKey(nowYear, nowWeek);
+      activeCampaign = currentCampaign;
+      dateWindow = campaignToBounds(currentCampaign);
+      sel.value = currentCampaign;
+      sel.classList.add('active');
+
+    } else if (preset === 'prev-campaign') {
+      const currentCampaign = getCampaignKey(nowYear, nowWeek);
+      const [startY] = currentCampaign.split('/').map(Number);
+      const prevCampaign = `${startY - 1}/${startY}`;
+      activeCampaign = prevCampaign;
+      dateWindow = campaignToBounds(prevCampaign);
+      sel.value = prevCampaign;
+      sel.classList.add('active');
+    }
+
+    // Actualizar botones activos
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === preset);
+    });
+
+    // Actualizar etiqueta de rango
+    updateRangeLabel();
+
+    if (chart) { chart.destroy(); chart = null; }
+    updatePanel();
+    renderChart();
+  }
+
+  // ── Etiqueta de rango visible ─────────────────────────────────────────────────
+  function updateRangeLabel() {
+    const el = document.getElementById('date-range-label');
+    if (!dateWindow) { el.textContent = 'Todo el histórico'; return; }
+    const { minYear, minWeek, maxYear, maxWeek } = dateWindow;
+    const d1 = fmtDate(isoWeekToDate(minYear, minWeek).getTime(), true);
+    const d2 = fmtDate(isoWeekToDate(maxYear, maxWeek).getTime(), true);
+    el.textContent = `${d1} → ${d2}`;
+  }
+
+  // ── Datos filtrados ───────────────────────────────────────────────────────────
+  function rowInWindow(d) {
+    if (!dateWindow) return true;
+    const { minYear, minWeek, maxYear, maxWeek } = dateWindow;
+    const y = parseInt(d.year), w = parseInt(d.week);
+    const after  = y > minYear || (y === minYear && w >= minWeek);
+    const before = y < maxYear || (y === maxYear && w <= maxWeek);
+    return after && before;
+  }
+
+  function getFiltered() {
+    return allData.filter(d =>
+      rowInWindow(d) &&
+      (activeFilter === 'ALL' || d.wine_type === activeFilter)
+    );
+  }
+
+  function avgOf(data, type) {
+    const vals = data.filter(d => d.wine_type === type).map(d => +d.price_eur_hl);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  }
+
+  // ── Right panel ───────────────────────────────────────────────────────────────
+  const TYPE_META = {
+    TINTO:  { label: 'Tinto',  emoji: '🍷', color: '#C0392B', dotColor: '#C0392B', bgVar: 'var(--tinto-bg)' },
+    BLANCO: { label: 'Blanco', emoji: '🥂', color: '#D4922A', dotColor: '#D4922A', bgVar: 'var(--blanco-bg)' },
+    MOSTO:  { label: 'Mosto',  emoji: '🍇', color: '#7C3AED', dotColor: '#7C3AED', bgVar: 'var(--mosto-bg)' },
+  };
+
+  function updatePanel() {
+    const filtered = getFiltered();
+    if (!filtered.length) return;
+
+    // Determinar qué tipos mostrar según el filtro activo
+    const typesToShow = activeFilter === 'ALL'
+      ? ['TINTO', 'BLANCO', 'MOSTO']
+      : [activeFilter];
+
+    // ── Wine cards ──────────────────────────────────────────────────────────────
+    const cardsHTML = typesToShow.map(type => {
+      const meta = TYPE_META[type];
+      const rows = filtered
+        .filter(d => d.wine_type === type)
+        .sort((a, b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
+
+      if (!rows.length) return '';
+
+      // Precio medio
+      const avg = rows.map(d => +d.price_eur_hl).reduce((a, b) => a + b, 0) / rows.length;
+
+      // Cambio porcentual (primera → última observación en la selección)
+      const first = +rows[0].price_eur_hl;
+      const last  = +rows[rows.length - 1].price_eur_hl;
+      const pct   = ((last - first) / first) * 100;
+      const isUp  = pct > 0.05;
+      const isDn  = pct < -0.05;
+      const pctClass  = isUp ? 'up' : isDn ? 'down' : 'flat';
+      const pctArrow  = isUp ? '↑' : isDn ? '↓' : '→';
+      const pctLabel  = `${pctArrow} ${Math.abs(pct).toFixed(1)}%`;
+
+      return `
+        <div class="wine-card">
+          <div class="wine-card-header">
+            <div class="wine-card-name">
+              <div class="wine-card-dot" style="background:${meta.dotColor}"></div>
+              ${meta.emoji} ${meta.label}
+            </div>
+            <span class="wine-card-pct ${pctClass}">${pctLabel}</span>
+          </div>
+          <div class="wine-card-price">${avg.toFixed(2)} €</div>
+          <div class="wine-card-sub">precio medio €/hl</div>
+          <div class="wine-card-range">
+            <span>${first.toFixed(2)} €</span>
+            →
+            <span>${last.toFixed(2)} €</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('wine-cards').innerHTML = cardsHTML;
+
+    // ── Últimas semanas ─────────────────────────────────────────────────────────
+    const sortedDesc = [...filtered].sort((a, b) =>
+      b.year !== a.year ? b.year - a.year : b.week - a.week
+    );
+    const seenWeeks = new Set();
+    const recentWeeks = [];
+    for (const d of sortedDesc) {
+      const key = `${d.year}-${d.week}`;
+      if (seenWeeks.has(key)) continue;
+      seenWeeks.add(key);
+      const rows = filtered.filter(r => r.year === d.year && r.week === d.week);
+      const avg  = rows.map(r => +r.price_eur_hl).reduce((a, b) => a + b, 0) / rows.length;
+      recentWeeks.push({ week: d.week, year: d.year, avg });
+      if (recentWeeks.length >= 5) break;
+    }
+
+    document.getElementById('weeks-list').innerHTML = recentWeeks.map(({ week, year, avg }) => {
+      const dateStr = fmtDate(isoWeekToDate(parseInt(year), parseInt(week)).getTime(), true);
+      return `
+        <div class="week-row">
+          <span class="wlabel">${dateStr}</span>
+          <span class="wval">${avg.toFixed(2)} €/hl</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Conversión semana ISO → fecha ─────────────────────────────────────────────
+  // ISO 8601: semana 1 es la semana que contiene el primer jueves del año.
+  // Devuelve el lunes de esa semana como objeto Date.
+  function isoWeekToDate(year, week) {
+    const jan4 = new Date(year, 0, 4); // 4 enero siempre está en semana 1
+    const mondayW1 = new Date(jan4);
+    mondayW1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7)); // retroceder al lunes
+    const result = new Date(mondayW1);
+    result.setDate(mondayW1.getDate() + (week - 1) * 7);
+    return result;
+  }
+
+  // Formatea una fecha como "3 feb" o "3 feb 2025" si cambia de año
+  function fmtDate(ts, showYear = false) {
+    const d = new Date(ts);
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const base = `${d.getDate()} ${months[d.getMonth()]}`;
+    return showYear ? `${base} ${d.getFullYear()}` : base;
+  }
+
+  // ── Datasets ──────────────────────────────────────────────────────────────────
+  function buildDatasets() {
+    const types    = activeFilter === 'ALL' ? ['TINTO', 'BLANCO', 'MOSTO'] : [activeFilter];
+    const filtered = getFiltered();
+    const years    = [...new Set(filtered.map(d => String(d.year)))].sort();
+    const datasets = [];
+
+    types.forEach(type => {
+      const color  = (TYPE_COLOR[type] || ['#888'])[0];
+      const points = [];
+
+      years.forEach(year => {
+        filtered
+          .filter(d => d.wine_type === type && String(d.year) === year)
+          .sort((a, b) => a.week - b.week)
+          .forEach(d => {
+            const ts = isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime();
+            points.push({ x: ts, y: +d.price_eur_hl, week: d.week, year: d.year });
+          });
+      });
+
+      if (!points.length) return;
+
+      datasets.push({
+        label: `${type[0] + type.slice(1).toLowerCase()}`,
+        data: points,
+        borderColor: color,
+        backgroundColor: color + '15',
+        pointBackgroundColor: color,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 7,
+        tension: 0.4,
+        fill: false,
+        _type: type,
+        _years: years,
+      });
+    });
+
+    return { datasets, years };
+  }
+
+  function buildLegend(datasets) {
+    document.getElementById('legend').innerHTML = datasets.map(ds => `
+      <div class="leg-item">
+        <div class="leg-dot" style="background:${ds.borderColor}"></div>
+        <span>${ds.label}</span>
+      </div>`).join('');
+  }
+
+  // ── Chart ─────────────────────────────────────────────────────────────────────
+  function renderChart() {
+    const { datasets, years } = buildDatasets();
+    buildLegend(datasets);
+
+    document.getElementById('loading').style.display = 'none';
+    const canvas = document.getElementById('chart');
+    canvas.style.display = 'block';
+
+    if (chart) { chart.destroy(); chart = null; }
+    if (!datasets.length) return;
+
+    // Calcular rango de tiempo de los datos visibles
+    const allTs = datasets.flatMap(ds => ds.data.map(p => p.x));
+    const minTs = Math.min(...allTs);
+    const maxTs = Math.max(...allTs);
+    const spanDays = (maxTs - minTs) / 86400000;
+
+    // Decidir granularidad de los ticks según el span visible
+    // < 60 días → mostrar cada semana ("3 feb")
+    // < 180 días → cada 2 semanas
+    // < 400 días → mensual ("feb 2025")
+    // ≥ 400 días → cada 2 meses
+    let tickInterval, tickFmt;
+    if (spanDays < 60) {
+      tickInterval = 7 * 24 * 3600000;
+      tickFmt = ts => fmtDate(ts, false);
+    } else if (spanDays < 180) {
+      tickInterval = 14 * 24 * 3600000;
+      tickFmt = ts => fmtDate(ts, false);
+    } else if (spanDays < 400) {
+      tickInterval = 30 * 24 * 3600000;
+      tickFmt = ts => {
+        const d = new Date(ts);
+        const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        return `${months[d.getMonth()]} ${d.getFullYear()}`;
+      };
+    } else {
+      tickInterval = 60 * 24 * 3600000;
+      tickFmt = ts => {
+        const d = new Date(ts);
+        const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        return `${months[d.getMonth()]} ${d.getFullYear()}`;
+      };
+    }
+
+    chart = new Chart(canvas, {
+      type: 'line',
+      data: { datasets },
+      options: {
+        responsive: true,
+        layout: { padding: { top: years.length > 1 ? 20 : 8 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827',
+            titleColor: '#F9FAFB',
+            bodyColor: '#D1D5DB',
+            borderColor: '#374151',
+            borderWidth: 1,
+            padding: 12,
+            titleFont: { family: 'Inter', size: 12, weight: '600' },
+            bodyFont:  { family: 'Inter', size: 12 },
+            callbacks: {
+              title: items => {
+                const raw = items[0].raw;
+                return fmtDate(raw.x, true) + ` · Sem. ${raw.week}`;
+              },
+              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} €/hl`,
+            }
+          },
+          yearLines: { id: 'yearLines' }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min: minTs,
+            max: maxTs + 7 * 86400000, // un poco de margen
+            ticks: {
+              font: { family: 'Inter', size: 10 },
+              color: '#9CA3AF',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 10,
+              callback: function(value) {
+                return tickFmt(value);
+              },
+            },
+            grid: {
+              color: ctx => {
+                // Marcar el 1 de enero con línea más oscura
+                const d = new Date(ctx.tick.value);
+                return (d.getMonth() === 0 && d.getDate() <= 7) ? '#D1D5DB' : '#F3F4F6';
+              },
+              lineWidth: ctx => {
+                const d = new Date(ctx.tick.value);
+                return (d.getMonth() === 0 && d.getDate() <= 7) ? 2 : 1;
+              },
+            },
+            border: { color: '#E5E7EB' },
+          },
+          y: {
+            title: {
+              display: true, text: '€ / hl',
+              font: { family: 'Inter', size: 11 }, color: '#9CA3AF',
+            },
+            ticks: {
+              font: { family: 'Inter', size: 11 }, color: '#9CA3AF',
+              callback: v => v.toFixed(0) + ' €',
+            },
+            grid: { color: '#F3F4F6' },
+            border: { color: '#E5E7EB' },
+          }
+        }
+      }
+    });
+
+    chart._vinexiaYears = years;
+  }
+
+  // ── Botones tipo ──────────────────────────────────────────────────────────────
+  document.querySelectorAll('.f-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll('.f-btn').forEach(b =>
+        b.classList.remove('on-all', 'on-tinto', 'on-blanco', 'on-mosto')
+      );
+      const cls = { ALL: 'on-all', TINTO: 'on-tinto', BLANCO: 'on-blanco', MOSTO: 'on-mosto' }[activeFilter];
+      btn.classList.add(cls);
+      if (chart) { chart.destroy(); chart = null; }
+      updatePanel(); renderChart();
+    });
+  });
+
+  // ── Botones preset ────────────────────────────────────────────────────────────
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => setPreset(btn.dataset.preset));
+  });
+
+  init();
+</script>
+</body>
+</html>
