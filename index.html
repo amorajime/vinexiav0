@@ -1001,7 +1001,8 @@
       const typeMatch = activeFilter === 'ALL' || d.wine_type === activeFilter;
       if (!rowInWindow(d) || !typeMatch) return false;
 
-      if (activeFilter !== 'TINTO' || activeAbv === 'ALL') return true;
+      // El ABV aplica a Tinto incluso cuando el filtro de tipo es "Todos".
+      if (d.wine_type !== 'TINTO' || activeAbv === 'ALL') return true;
       const abv = parseEuropeanNumber(d.abv);
       if (abv === null) return false;
       return Math.round(abv) === Number(activeAbv);
@@ -1155,13 +1156,11 @@
     const years    = [...new Set(filtered.map(d => String(d.year)))].sort();
     const datasets = [];
 
-    types.forEach(type => {
-      const color  = (TYPE_COLOR[type] || ['#888'])[0];
+    function buildPoints(rows) {
       const points = [];
-
       years.forEach(year => {
-        filtered
-          .filter(d => d.wine_type === type && String(d.year) === year)
+        rows
+          .filter(d => String(d.year) === year)
           .sort((a, b) => a.week - b.week)
           .forEach(d => {
             const ts = isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime();
@@ -1170,11 +1169,57 @@
             points.push({ x: ts, y: yVal, week: d.week, year: d.year });
           });
       });
+      return points;
+    }
 
+    types.forEach(type => {
+      // En Tinto + "Todos los grados", desagregamos por ABV para evitar mezclar curvas.
+      if (type === 'TINTO' && activeAbv === 'ALL') {
+        const tintoRows = filtered.filter(d => d.wine_type === 'TINTO');
+        const abvValues = [...new Set(
+          tintoRows
+            .map(d => parseEuropeanNumber(d.abv))
+            .filter(v => v !== null)
+            .map(v => Math.round(v))
+        )].sort((a, b) => a - b);
+
+        abvValues.forEach((abvValue, idx) => {
+          const rows = tintoRows.filter(d => {
+            const abv = parseEuropeanNumber(d.abv);
+            return abv !== null && Math.round(abv) === abvValue;
+          });
+          const points = buildPoints(rows);
+          if (!points.length) return;
+          const color = (TYPE_COLOR.TINTO || ['#C0392B'])[idx % (TYPE_COLOR.TINTO || ['#C0392B']).length];
+
+          datasets.push({
+            label: `Tinto ${abvValue}°`,
+            data: points,
+            borderColor: color,
+            backgroundColor: color + '15',
+            pointBackgroundColor: color,
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointHoverRadius: 7,
+            tension: 0.4,
+            fill: false,
+            _type: 'TINTO',
+            _abv: abvValue,
+            _years: years,
+          });
+        });
+        return;
+      }
+
+      const rows = filtered.filter(d => d.wine_type === type);
+      const points = buildPoints(rows);
       if (!points.length) return;
+      const color = (TYPE_COLOR[type] || ['#888'])[0];
+      const baseLabel = `${type[0] + type.slice(1).toLowerCase()}`;
+      const label = type === 'TINTO' && activeAbv !== 'ALL' ? `${baseLabel} ${activeAbv}°` : baseLabel;
 
       datasets.push({
-        label: `${type[0] + type.slice(1).toLowerCase()}`,
+        label,
         data: points,
         borderColor: color,
         backgroundColor: color + '15',
@@ -1330,7 +1375,7 @@
   // ── Botones tipo ──────────────────────────────────────────────────────────────
   function syncAbvFilterVisibility() {
     const wrap = document.getElementById('abv-filter-wrap');
-    wrap.classList.toggle('hidden', activeFilter !== 'TINTO');
+    wrap.classList.toggle('hidden', !(activeFilter === 'TINTO' || activeFilter === 'ALL'));
   }
 
   function updateDynamicUnitLabels() {
@@ -1341,7 +1386,7 @@
   document.querySelectorAll('.f-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
-      if (activeFilter !== 'TINTO') {
+      if (!(activeFilter === 'TINTO' || activeFilter === 'ALL')) {
         activeAbv = 'ALL';
         document.querySelectorAll('.abv-pill').forEach(p => p.classList.toggle('active', p.dataset.abv === 'ALL'));
       }
