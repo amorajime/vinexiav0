@@ -314,6 +314,13 @@
     .f-btn.on-tinto  { background: var(--tinto);  border-color: var(--tinto);  color: #fff; }
     .f-btn.on-blanco { background: var(--blanco); border-color: var(--blanco); color: #fff; }
     .f-btn.on-mosto  { background: var(--mosto);  border-color: var(--mosto);  color: #fff; }
+    .sub-filter-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .sub-filter-group.hidden { display: none; }
 
     .divider-v {
       width: 1px; height: 18px;
@@ -375,6 +382,27 @@
 
     .campaign-select:focus { border-color: var(--ink); }
     .campaign-select.active { border-color: var(--ink); border-width: 2px; }
+    .unit-toggle {
+      display: inline-flex;
+      border: 1.5px solid var(--grey-light);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--white);
+    }
+    .unit-btn {
+      border: 0;
+      background: transparent;
+      padding: 5px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--grey);
+      cursor: pointer;
+    }
+    .unit-btn.active {
+      background: var(--ink);
+      color: #fff;
+    }
 
     .date-range-label {
       font-size: 11px;
@@ -637,7 +665,7 @@
       <div class="chart-top">
         <div class="chart-top-left">
           <h2>Evolución semanal del precio</h2>
-          <p>€ por hectolitro · filtrado por tipo y año</p>
+          <p id="chart-subtitle">€ por hectolitro · filtrado por tipo y año</p>
         </div>
         <div class="filters">
           <span class="filter-label">Tipo</span>
@@ -645,6 +673,22 @@
           <button class="f-btn" data-filter="TINTO">Tinto</button>
           <button class="f-btn" data-filter="BLANCO">Blanco</button>
           <button class="f-btn" data-filter="MOSTO">Mosto</button>
+          <div class="divider-v"></div>
+          <span class="filter-label">Unidad</span>
+          <div class="unit-toggle" id="unit-toggle">
+            <button class="unit-btn active" data-unit="hl">€/hl</button>
+            <button class="unit-btn" data-unit="hg">€/hg</button>
+          </div>
+          <div class="sub-filter-group hidden" id="abv-filter-wrap">
+            <div class="divider-v"></div>
+            <span class="filter-label">Grado alcohólico</span>
+            <select class="campaign-select" id="abv-select">
+              <option value="ALL">Todos</option>
+              <option value="LE13">≤13%</option>
+              <option value="13_14">13%–14%</option>
+              <option value="GE14">≥14%</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -748,7 +792,7 @@
   // ── Config Supabase ───────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://ztteligyldpedbilvoev.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dGVsaWd5bGRwZWRiaWx2b2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0ODk5NjUsImV4cCI6MjA4NzA2NTk2NX0.YYq7lCufarLYNX0f5eRG4h6QKmfjhFZYufUFePVG0bs';
-  const TABLE = 'VinexiaV0';
+  const TABLE = 'VinexiaV1';
 
   // ── Paleta ────────────────────────────────────────────────────────────────────
   const TYPE_COLOR = {
@@ -782,6 +826,8 @@
   // ── Estado ────────────────────────────────────────────────────────────────────
   let allData       = [];
   let activeFilter  = 'ALL';
+  let activeAbv     = 'ALL';
+  let activeUnit    = 'hl';
   let activePreset  = 'all';   // 'all' | '4w' | '3m' | 'year' | 'campaign'
   let activeCampaign = null;   // ej. "2024/2025" o null
   // dateWindow: { minYear, minWeek, maxYear, maxWeek } or null = all
@@ -790,7 +836,7 @@
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   async function fetchData() {
-    const url = `${SUPABASE_URL}/rest/v1/${TABLE}?select=week,year,wine_type,price_eur_hl&order=year.asc,week.asc`;
+    const url = `${SUPABASE_URL}/rest/v1/${TABLE}?select=week,year,wine_type,abv,price_eur_hl,price_eur_hg&order=year.asc,week.asc`;
     const res = await fetch(url, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
@@ -802,7 +848,7 @@
   async function init() {
     try {
       const raw = await fetchData();
-      allData = raw.filter(d => d.year !== null && d.price_eur_hl !== null);
+      allData = raw.filter(d => d.year !== null && (d.price_eur_hl !== null || d.price_eur_hg !== null));
 
       // Semana de calendario real
       const { week: calWeek, year: calYear } = getCurrentCalendarWeek();
@@ -928,14 +974,44 @@
   }
 
   function getFiltered() {
-    return allData.filter(d =>
-      rowInWindow(d) &&
-      (activeFilter === 'ALL' || d.wine_type === activeFilter)
-    );
+    return allData.filter(d => {
+      const typeMatch = activeFilter === 'ALL' || d.wine_type === activeFilter;
+      if (!rowInWindow(d) || !typeMatch) return false;
+
+      if (activeFilter !== 'TINTO' || activeAbv === 'ALL') return true;
+      const abv = parseEuropeanNumber(d.abv);
+      if (abv === null) return false;
+
+      if (activeAbv === 'LE13') return abv <= 13;
+      if (activeAbv === '13_14') return abv > 13 && abv < 14;
+      if (activeAbv === 'GE14') return abv >= 14;
+      return true;
+    });
+  }
+
+  function parseEuropeanNumber(value) {
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().replace(',', '.');
+    if (!normalized) return null;
+    const parsed = parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function getUnitLabel() {
+    return activeUnit === 'hg' ? '€/hg' : '€/hl';
+  }
+
+  function getActivePriceValue(row) {
+    const source = activeUnit === 'hg' ? row.price_eur_hg : row.price_eur_hl;
+    return parseEuropeanNumber(source);
+  }
+
+  function getNumericPrices(rows) {
+    return rows.map(getActivePriceValue).filter(v => v !== null);
   }
 
   function avgOf(data, type) {
-    const vals = data.filter(d => d.wine_type === type).map(d => +d.price_eur_hl);
+    const vals = getNumericPrices(data.filter(d => d.wine_type === type));
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   }
 
@@ -948,7 +1024,11 @@
 
   function updatePanel() {
     const filtered = getFiltered();
-    if (!filtered.length) return;
+    if (!filtered.length) {
+      document.getElementById('wine-cards').innerHTML = '';
+      document.getElementById('weeks-list').innerHTML = '';
+      return;
+    }
 
     // Determinar qué tipos mostrar según el filtro activo
     const typesToShow = activeFilter === 'ALL'
@@ -965,11 +1045,14 @@
       if (!rows.length) return '';
 
       // Precio medio
-      const avg = rows.map(d => +d.price_eur_hl).reduce((a, b) => a + b, 0) / rows.length;
+      const prices = getNumericPrices(rows);
+      if (!prices.length) return '';
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
 
       // Cambio porcentual (primera → última observación en la selección)
-      const first = +rows[0].price_eur_hl;
-      const last  = +rows[rows.length - 1].price_eur_hl;
+      const first = getActivePriceValue(rows[0]);
+      const last  = getActivePriceValue(rows[rows.length - 1]);
+      if (first === null || last === null || first === 0) return '';
       const pct   = ((last - first) / first) * 100;
       const isUp  = pct > 0.05;
       const isDn  = pct < -0.05;
@@ -987,7 +1070,7 @@
             <span class="wine-card-pct ${pctClass}">${pctLabel}</span>
           </div>
           <div class="wine-card-price">${avg.toFixed(2)} €</div>
-          <div class="wine-card-sub">precio medio €/hl</div>
+          <div class="wine-card-sub">precio medio ${getUnitLabel()}</div>
           <div class="wine-card-range">
             <span>${first.toFixed(2)} €</span>
             →
@@ -1009,7 +1092,9 @@
       if (seenWeeks.has(key)) continue;
       seenWeeks.add(key);
       const rows = filtered.filter(r => r.year === d.year && r.week === d.week);
-      const avg  = rows.map(r => +r.price_eur_hl).reduce((a, b) => a + b, 0) / rows.length;
+      const values = getNumericPrices(rows);
+      if (!values.length) continue;
+      const avg  = values.reduce((a, b) => a + b, 0) / values.length;
       recentWeeks.push({ week: d.week, year: d.year, avg });
       if (recentWeeks.length >= 5) break;
     }
@@ -1019,7 +1104,7 @@
       return `
         <div class="week-row">
           <span class="wlabel">${dateStr}</span>
-          <span class="wval">${avg.toFixed(2)} €/hl</span>
+          <span class="wval">${avg.toFixed(2)} ${getUnitLabel()}</span>
         </div>`;
     }).join('');
   }
@@ -1061,7 +1146,9 @@
           .sort((a, b) => a.week - b.week)
           .forEach(d => {
             const ts = isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime();
-            points.push({ x: ts, y: +d.price_eur_hl, week: d.week, year: d.year });
+            const yVal = getActivePriceValue(d);
+            if (yVal === null) return;
+            points.push({ x: ts, y: yVal, week: d.week, year: d.year });
           });
       });
 
@@ -1163,7 +1250,7 @@
                 const raw = items[0].raw;
                 return fmtDate(raw.x, true) + ` · Sem. ${raw.week}`;
               },
-              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} €/hl`,
+              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} ${getUnitLabel()}`,
             }
           },
           yearLines: { id: 'yearLines' }
@@ -1198,7 +1285,7 @@
           },
           y: {
             title: {
-              display: true, text: '€ / hl',
+              display: true, text: activeUnit === 'hg' ? '€ / hg' : '€ / hl',
               font: { family: 'Inter', size: 11 }, color: '#9CA3AF',
             },
             ticks: {
@@ -1216,14 +1303,47 @@
   }
 
   // ── Botones tipo ──────────────────────────────────────────────────────────────
+  function syncAbvFilterVisibility() {
+    const wrap = document.getElementById('abv-filter-wrap');
+    wrap.classList.toggle('hidden', activeFilter !== 'TINTO');
+  }
+
+  function updateDynamicUnitLabels() {
+    document.getElementById('chart-subtitle').textContent =
+      `${activeUnit === 'hg' ? '€ por hectogramo' : '€ por hectolitro'} · filtrado por tipo y año`;
+  }
+
   document.querySelectorAll('.f-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
+      if (activeFilter !== 'TINTO') {
+        activeAbv = 'ALL';
+        document.getElementById('abv-select').value = 'ALL';
+      }
       document.querySelectorAll('.f-btn').forEach(b =>
         b.classList.remove('on-all', 'on-tinto', 'on-blanco', 'on-mosto')
       );
       const cls = { ALL: 'on-all', TINTO: 'on-tinto', BLANCO: 'on-blanco', MOSTO: 'on-mosto' }[activeFilter];
       btn.classList.add(cls);
+      syncAbvFilterVisibility();
+      if (chart) { chart.destroy(); chart = null; }
+      updatePanel(); renderChart();
+    });
+  });
+
+  // ── Filtro ABV ────────────────────────────────────────────────────────────────
+  document.getElementById('abv-select').addEventListener('change', e => {
+    activeAbv = e.target.value;
+    if (chart) { chart.destroy(); chart = null; }
+    updatePanel(); renderChart();
+  });
+
+  // ── Toggle unidad ─────────────────────────────────────────────────────────────
+  document.querySelectorAll('.unit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeUnit = btn.dataset.unit;
+      document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('active', b === btn));
+      updateDynamicUnitLabels();
       if (chart) { chart.destroy(); chart = null; }
       updatePanel(); renderChart();
     });
@@ -1234,6 +1354,8 @@
     btn.addEventListener('click', () => setPreset(btn.dataset.preset));
   });
 
+  syncAbvFilterVisibility();
+  updateDynamicUnitLabels();
   init();
 </script>
 </body>
