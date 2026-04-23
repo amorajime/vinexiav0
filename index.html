@@ -913,6 +913,83 @@
       /* Filter buttons: smaller text on very small screens */
       .f-btn, .abv-pill, .preset-btn { font-size: 11px; padding: 4px 10px; }
     }
+
+    /* ── Calculator page ─────────────────────────────────────────────────────── */
+    .calc-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .calc-tab {
+      padding: 7px 18px;
+      border-radius: 8px;
+      border: 1.5px solid var(--grey-light);
+      background: transparent;
+      color: var(--grey);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .calc-tab:hover { border-color: var(--ink); color: var(--ink); }
+
+    .calc-tab.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .calc-result {
+      margin-top: 24px;
+      background: var(--green-bg);
+      border: 1.5px solid #A7F3D0;
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .calc-result-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--grey);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .calc-result-value {
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1.1;
+    }
+
+    .calc-result-unit {
+      font-size: 13px;
+      color: var(--grey);
+      margin-top: 2px;
+    }
+
+    .calc-result.empty .calc-result-value { color: var(--grey-light); }
+
+    .calc-formula-note {
+      font-size: 12px;
+      color: var(--grey);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    .calc-formula-note code {
+      background: var(--bg);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11.5px;
+      color: var(--ink);
+    }
   </style>
 </head>
 <body>
@@ -932,6 +1009,10 @@
     <a class="nav-item" id="nav-añadir" onclick="navigateTo('añadir')">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/><path d="M12 5v2"/></svg>
       Añadir datos
+    </a>
+    <a class="nav-item" id="nav-calculadora" onclick="navigateTo('calculadora')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+      Calculadora
     </a>
   </nav>
 
@@ -1127,6 +1208,70 @@
     </div>
 
   </div><!-- /page-añadir -->
+
+  <!-- ── PÁGINA 3: CALCULADORA ──────────────────────────────────────────────── -->
+  <div class="page" id="page-calculadora">
+
+    <div class="form-block">
+      <h2>Calculadora de unidades</h2>
+      <p class="form-desc">Convierte entre hectolitros y hectogrados. Un hectogrado equivale a 1 hl × 1% vol.</p>
+
+      <div class="calc-tabs" style="margin-top: 24px;">
+        <button class="calc-tab active" id="tab-hg" onclick="switchCalcMode('hg')">hl + graduación → hg</button>
+        <button class="calc-tab" id="tab-hl" onclick="switchCalcMode('hl')">hg + graduación → hl</button>
+      </div>
+
+      <!-- Modo: hl → hg -->
+      <div id="calc-form-hg">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Hectolitros (hl)</label>
+            <input class="form-input" type="number" id="calc-hl-input" placeholder="ej. 150" min="0" step="0.01" oninput="calcHG()" />
+          </div>
+          <div class="form-group">
+            <label>Graduación (% vol)</label>
+            <input class="form-input" type="number" id="calc-abv-input" placeholder="ej. 13" min="0" max="25" step="0.1" oninput="calcHG()" />
+          </div>
+        </div>
+
+        <div class="calc-result empty" id="calc-result-hg">
+          <div class="calc-result-label">Resultado</div>
+          <div class="calc-result-value" id="calc-result-hg-value">—</div>
+          <div class="calc-result-unit">hectogrados (hg)</div>
+        </div>
+
+        <p class="calc-formula-note">
+          Fórmula: <code>hg = hl × % vol</code> — Ejemplo: 150 hl × 13° = 1.950 hg
+        </p>
+      </div>
+
+      <!-- Modo: hg → hl -->
+      <div id="calc-form-hl" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Hectogrados (hg)</label>
+            <input class="form-input" type="number" id="calc-hg-input" placeholder="ej. 1950" min="0" step="0.01" oninput="calcHL()" />
+          </div>
+          <div class="form-group">
+            <label>Graduación (% vol)</label>
+            <input class="form-input" type="number" id="calc-abv-input-rev" placeholder="ej. 13" min="0" max="25" step="0.1" oninput="calcHL()" />
+          </div>
+        </div>
+
+        <div class="calc-result empty" id="calc-result-hl">
+          <div class="calc-result-label">Resultado</div>
+          <div class="calc-result-value" id="calc-result-hl-value">—</div>
+          <div class="calc-result-unit">hectolitros (hl)</div>
+        </div>
+
+        <p class="calc-formula-note">
+          Fórmula: <code>hl = hg ÷ % vol</code> — Ejemplo: 1.950 hg ÷ 13° = 150 hl
+        </p>
+      </div>
+
+    </div>
+
+  </div><!-- /page-calculadora -->
 
   </div><!-- /content -->
 
@@ -2013,7 +2158,7 @@
     document.getElementById(`page-${page}`).classList.add('active');
     document.getElementById(`nav-${page}`).classList.add('active');
 
-    const titles = { indice: 'Dashboard de precios', añadir: 'Añadir datos' };
+    const titles = { indice: 'Dashboard de precios', añadir: 'Añadir datos', calculadora: 'Calculadora de unidades' };
     document.getElementById('topbar-title').textContent = titles[page] || '';
 
     if (page === 'añadir') {
@@ -2022,6 +2167,47 @@
     }
 
     closeSidebar(); // cierra el menú en móvil al navegar
+  }
+
+  // ── Calculadora ───────────────────────────────────────────────────────────────
+  function calcHG() {
+    const hl  = parseFloat(document.getElementById('calc-hl-input').value);
+    const abv = parseFloat(document.getElementById('calc-abv-input').value);
+    const resultEl = document.getElementById('calc-result-hg');
+    const valueEl  = document.getElementById('calc-result-hg-value');
+
+    if (!isNaN(hl) && !isNaN(abv) && abv > 0) {
+      const hg = hl * abv;
+      valueEl.textContent = hg.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+      resultEl.classList.remove('empty');
+    } else {
+      valueEl.textContent = '—';
+      resultEl.classList.add('empty');
+    }
+  }
+
+  function calcHL() {
+    const hg  = parseFloat(document.getElementById('calc-hg-input').value);
+    const abv = parseFloat(document.getElementById('calc-abv-input-rev').value);
+    const resultEl = document.getElementById('calc-result-hl');
+    const valueEl  = document.getElementById('calc-result-hl-value');
+
+    if (!isNaN(hg) && !isNaN(abv) && abv > 0) {
+      const hl = hg / abv;
+      valueEl.textContent = hl.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+      resultEl.classList.remove('empty');
+    } else {
+      valueEl.textContent = '—';
+      resultEl.classList.add('empty');
+    }
+  }
+
+  function switchCalcMode(mode) {
+    const isHG = mode === 'hg';
+    document.getElementById('calc-form-hg').style.display = isHG ? '' : 'none';
+    document.getElementById('calc-form-hl').style.display = isHG ? 'none' : '';
+    document.getElementById('tab-hg').classList.toggle('active', isHG);
+    document.getElementById('tab-hl').classList.toggle('active', !isHG);
   }
 
   // ── Menú móvil ────────────────────────────────────────────────────────────────
