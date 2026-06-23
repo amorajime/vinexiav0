@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vinexia — Índice de Precios</title>
+  <title>Vinexia — Índices de Mercado</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -661,6 +661,40 @@
     .chart-card { animation: fadeUp 0.4s 0.12s ease both; }
     .right-panel > * { animation: fadeUp 0.4s 0.18s ease both; }
 
+
+    /* ── Índices landing ─────────────────────────────────────────────────────── */
+    .indices-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+    .indices-header p { font-size: 14px; color: var(--grey); margin-top: 6px; max-width: 560px; }
+    .indices-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 960px) { .indices-grid { grid-template-columns: 1fr; } }
+    .index-card {
+      background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+      padding: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer;
+      border: 1.5px solid var(--grey-light); transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      animation: fadeUp 0.4s ease both; text-align: left; font-family: inherit; color: inherit; width: 100%;
+    }
+    .index-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .index-card--hl { background: linear-gradient(180deg, #EFF6FF 0%, var(--white) 55%); border-color: #BFDBFE; }
+    .index-card--hl:hover { border-color: #93C5FD; }
+    .index-card--hl .index-card-cta { color: #2563EB; }
+    .index-card--hg { background: linear-gradient(180deg, #FFF7ED 0%, var(--white) 55%); border-color: #FED7AA; }
+    .index-card--hg:hover { border-color: #FDBA74; }
+    .index-card--hg .index-card-cta { color: #EA580C; }
+    .index-card--uva { background: linear-gradient(180deg, #ECFDF5 0%, var(--white) 55%); border-color: #A7F3D0; }
+    .index-card--uva:hover { border-color: #6EE7B7; }
+    .index-card--uva .index-card-cta { color: #059669; }
+    .index-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .index-card h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; flex: 1; min-width: 0; }
+    .index-card-price { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; white-space: nowrap; color: var(--ink); }
+    .index-card-spark { min-height: 36px; margin: 4px 0; }
+    .index-card-cta { font-size: 12px; font-weight: 600; color: var(--tinto); margin-top: auto; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--grey); cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; }
+    .back-link:hover { color: var(--ink); }
+    .source-note { font-size: 12px; color: var(--grey); padding: 10px 14px; background: var(--bg); border-radius: 8px; line-height: 1.5; margin-top: 12px; }
+    .f-btn.on-tinta { background: var(--tinto); border-color: var(--tinto); color: #fff; }
+    .f-btn.on-blanca-uva { background: var(--blanco); border-color: var(--blanco); color: #fff; }
+    .variety-select { padding: 5px 10px; border-radius: 20px; border: 1.5px solid var(--grey-light); background: var(--white); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--ink); cursor: pointer; outline: none; max-width: 200px; }
+
     /* ── Form page ───────────────────────────────────────────────────────────── */
     .page { display: none; }
     .page.active { display: flex; flex-direction: column; gap: 24px; }
@@ -1019,7 +1053,7 @@
   </div>
 
   <nav class="sidebar-nav">
-    <a class="nav-item active" id="nav-indice" onclick="navigateTo('indice')">
+    <a class="nav-item active" id="nav-indices" onclick="navigateTo('indices')">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
       Índice
     </a>
@@ -1050,7 +1084,7 @@
     <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="topbar-title" id="topbar-title">Dashboard de precios</div>
+    <div class="topbar-title" id="topbar-title">Índices de mercado</div>
   </div>
   <div class="topbar-right">
     <span class="topbar-badge" id="topbar-week">Semana — · —</span>
@@ -1062,104 +1096,159 @@
 <div class="main-wrap">
   <div class="content">
 
-    <!-- ── PÁGINA 1: ÍNDICE ────────────────────────────────────────────────── -->
-    <div class="page active" id="page-indice">
-    <!-- Error -->
-    <div id="error-box" class="error-box">
-      <strong>⚠ Error al conectar con Supabase</strong>
-      Si abres el archivo como <code>file://</code>, el navegador bloquea las peticiones de red (CORS).<br>
-      <strong>Solución:</strong> sube el .html a <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a> y ábrelo desde su URL.
+
+    <div class="page active" id="page-indices">
+      <div id="error-box" class="error-box">
+        <strong>⚠ Error al conectar con Supabase</strong>
+        Si abres el archivo como <code>file://</code>, el navegador bloquea las peticiones de red (CORS).<br>
+        <strong>Solución:</strong> sube el .html a <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a> y ábrelo desde su URL.
+      </div>
+      <div class="indices-header">
+        <h1>Índices de mercado</h1>
+        <p>Referencia semanal de precios. Pulsa un índice para ver la evolución completa y filtrar.</p>
+      </div>
+      <div class="indices-grid" id="indices-grid"></div>
     </div>
 
-    <!-- Filtros temporales (compartidos entre ambas gráficas) -->
+    <div class="page" id="page-indice-hl">
+      <button type="button" class="back-link" onclick="navigateTo('indices')">← Índices</button>
     <div class="date-filter-row">
       <span class="filter-label">Periodo</span>
-      <button class="preset-btn" data-preset="4w">Últimas 4 sem.</button>
-      <button class="preset-btn" data-preset="3m">Últimos 3 meses</button>
-      <button class="preset-btn" data-preset="year">Este año</button>
+      <button class="preset-btn" data-preset="4w" data-scope="hl">Últimas 4 sem.</button>
+      <button class="preset-btn" data-preset="3m" data-scope="hl">Últimos 3 meses</button>
+      <button class="preset-btn" data-preset="year" data-scope="hl">Este año</button>
       <div class="divider-v"></div>
       <span class="filter-label">Campaña</span>
-      <select class="campaign-select" id="campaign-select">
-        <option value="">— Seleccionar —</option>
-      </select>
+      <select class="campaign-select" id="campaign-select-hl"><option value="">— Seleccionar —</option></select>
       <div class="divider-v"></div>
-      <button class="preset-btn active" data-preset="all">Todo el histórico</button>
-      <span class="date-range-label" id="date-range-label">Todo el histórico</span>
+      <button class="preset-btn" data-preset="all" data-scope="hl">Todo el histórico</button>
+      <span class="date-range-label" id="date-range-label-hl">Todo el histórico</span>
+    </div>
+      <section class="dashboard-block" id="block-hl">
+        <div class="block-header">
+          <div class="block-title-area">
+            <h2>Precio por hectolitro</h2>
+            <p>€/hl · evolución semanal · vino a granel · referencia nacional (MAPA)</p>
+          </div>
+          <div class="filters" id="filters-hl">
+            <span class="filter-label">Tipo</span>
+            <button class="f-btn on-all" data-filter="ALL" data-target="hl">Todos</button>
+            <button class="f-btn" data-filter="TINTO" data-target="hl">Tinto</button>
+            <button class="f-btn" data-filter="BLANCO" data-target="hl">Blanco</button>
+            <button class="f-btn" data-filter="MOSTO" data-target="hl">Mosto</button>
+          </div>
+        </div>
+        <div class="block-main">
+          <div class="block-chart-area">
+            <div class="legend-row" id="legend-hl"></div>
+            <div id="loading-hl" class="loading"><div class="spinner"></div> Cargando datos</div>
+            <canvas id="chart-hl" style="display:none"></canvas>
+          </div>
+          <aside class="block-summary-area">
+            <div class="panel-subtitle">Resumen por tipo (€/hl)</div>
+            <div class="wine-cards" id="wine-cards"></div>
+          </aside>
+        </div>
+      </section>
     </div>
 
-    <!-- BLOQUE 1: PRECIO POR HECTOLITRO -->
-    <section class="dashboard-block" id="block-hl">
-      <div class="block-header">
-        <div class="block-title-area">
-          <h2>Precio por hectolitro</h2>
-          <p>€/hl · evolución semanal · tinto promediado</p>
-        </div>
-        <div class="filters" id="filters-hl">
-          <span class="filter-label">Tipo</span>
-          <button class="f-btn on-all" data-filter="ALL" data-target="hl">Todos</button>
-          <button class="f-btn" data-filter="TINTO" data-target="hl">Tinto</button>
-          <button class="f-btn" data-filter="BLANCO" data-target="hl">Blanco</button>
-          <button class="f-btn" data-filter="MOSTO" data-target="hl">Mosto</button>
-        </div>
-      </div>
-
-      <div class="block-main">
-        <div class="block-chart-area">
-          <div class="legend-row" id="legend-hl"></div>
-          <div id="loading-hl" class="loading">
-            <div class="spinner"></div> Cargando datos
-          </div>
-          <canvas id="chart-hl" style="display:none"></canvas>
-        </div>
-
-        <aside class="block-summary-area">
-          <div class="panel-subtitle">Resumen por tipo (€/hl)</div>
-          <div class="wine-cards" id="wine-cards"></div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- BLOQUE 2: PRECIO POR HECTOGRAMO -->
-    <section class="dashboard-block" id="block-hg">
-      <div class="block-header">
+    <div class="page" id="page-indice-hg">
+      <button type="button" class="back-link" onclick="navigateTo('indices')">← Índices</button>
+    <div class="date-filter-row">
+      <span class="filter-label">Periodo</span>
+      <button class="preset-btn" data-preset="4w" data-scope="hg">Últimas 4 sem.</button>
+      <button class="preset-btn" data-preset="3m" data-scope="hg">Últimos 3 meses</button>
+      <button class="preset-btn" data-preset="year" data-scope="hg">Este año</button>
+      <div class="divider-v"></div>
+      <span class="filter-label">Campaña</span>
+      <select class="campaign-select" id="campaign-select-hg"><option value="">— Seleccionar —</option></select>
+      <div class="divider-v"></div>
+      <button class="preset-btn" data-preset="all" data-scope="hg">Todo el histórico</button>
+      <span class="date-range-label" id="date-range-label-hg">Todo el histórico</span>
+    </div>
+      <section class="dashboard-block" id="block-hg">
+        <div class="block-header">
           <div class="block-title-area">
-          <h2>Precio por hectogrado</h2>
-          <p>€/hg · evolución semanal · filtra por graduación (tinto y blanco)</p>
-        </div>
-        <div class="filters-stack" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-          <div class="filters" id="filters-hg">
-            <span class="filter-label">Tipo</span>
-            <button class="f-btn on-all" data-filter="ALL" data-target="hg">Todos</button>
-            <button class="f-btn" data-filter="TINTO" data-target="hg">Tinto</button>
-            <button class="f-btn" data-filter="BLANCO" data-target="hg">Blanco</button>
+            <h2>Precio por hectogrado</h2>
+            <p>€/hg · evolución semanal · filtra por graduación (tinto y blanco)</p>
           </div>
-          <div class="sub-filter-group hidden abv-pill-row" id="abv-filter-wrap">
-            <span class="filter-label">Grado</span>
-            <button class="abv-pill active" data-abv="ALL" id="abv-all">Todos</button>
-            <button class="abv-pill" data-abv="11" id="abv-11">11°</button>
-            <button class="abv-pill" data-abv="13" id="abv-13">13°</button>
-            <button class="abv-pill" data-abv="15" id="abv-15">15°</button>
+          <div class="filters-stack" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+            <div class="filters" id="filters-hg">
+              <span class="filter-label">Tipo</span>
+              <button class="f-btn on-all" data-filter="ALL" data-target="hg">Todos</button>
+              <button class="f-btn" data-filter="TINTO" data-target="hg">Tinto</button>
+              <button class="f-btn" data-filter="BLANCO" data-target="hg">Blanco</button>
+            </div>
+            <div class="sub-filter-group abv-pill-row" id="abv-filter-wrap">
+              <span class="filter-label">Grado</span>
+              <button class="abv-pill active" data-abv="ALL" id="abv-all">Todos</button>
+              <button class="abv-pill" data-abv="11" id="abv-11">11°</button>
+              <button class="abv-pill" data-abv="13" id="abv-13">13°</button>
+              <button class="abv-pill" data-abv="15" id="abv-15">15°</button>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="block-main">
-        <div class="block-chart-area">
-          <div class="legend-row" id="legend-hg"></div>
-          <div id="loading-hg" class="loading">
-            <div class="spinner"></div> Cargando datos
+        <div class="block-main">
+          <div class="block-chart-area">
+            <div class="legend-row" id="legend-hg"></div>
+            <div id="loading-hg" class="loading"><div class="spinner"></div> Cargando datos</div>
+            <canvas id="chart-hg" style="display:none"></canvas>
           </div>
-          <canvas id="chart-hg" style="display:none"></canvas>
+          <aside class="block-summary-area">
+            <div class="panel-subtitle">Resumen por tipo (€/hg)</div>
+            <div class="wine-cards" id="wine-cards-hg"></div>
+          </aside>
         </div>
+      </section>
+    </div>
 
-        <aside class="block-summary-area">
-          <div class="panel-subtitle">Resumen por tipo (€/hg)</div>
-          <div class="wine-cards" id="wine-cards-hg"></div>
-        </aside>
-      </div>
-    </section>
+    <div class="page" id="page-indice-uva">
+      <button type="button" class="back-link" onclick="navigateTo('indices')">← Índices</button>
+    <div class="date-filter-row">
+      <span class="filter-label">Periodo</span>
+      <button class="preset-btn" data-preset="4w" data-scope="uva">Últimas 4 sem.</button>
+      <button class="preset-btn" data-preset="3m" data-scope="uva">Últimos 3 meses</button>
+      <button class="preset-btn" data-preset="year" data-scope="uva">Este año</button>
+      <div class="divider-v"></div>
+      <span class="filter-label">Campaña</span>
+      <select class="campaign-select" id="campaign-select-uva"><option value="">— Seleccionar —</option></select>
+      <div class="divider-v"></div>
+      <button class="preset-btn" data-preset="all" data-scope="uva">Todo el histórico</button>
+      <span class="date-range-label" id="date-range-label-uva">Todo el histórico</span>
+    </div>
+      <section class="dashboard-block" id="block-uva">
+        <div class="block-header">
+          <div class="block-title-area">
+            <h2>Precio por kilo de uva</h2>
+            <p>€/kg · evolución semanal · referencia regional</p>
+          </div>
+          <div class="filters-stack" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+            <div class="filters" id="filters-uva">
+              <span class="filter-label">Tipo</span>
+              <button class="f-btn on-tinta" data-filter="TINTA" data-target="uva">Tinta</button>
+              <button class="f-btn" data-filter="BLANCA" data-target="uva">Blanca</button>
+            </div>
+            <div class="sub-filter-group" style="display:flex;gap:8px;align-items:center;">
+              <span class="filter-label">Variedad</span>
+              <select class="variety-select" id="variety-select"></select>
+            </div>
+          </div>
+        </div>
+        <div class="block-main">
+          <div class="block-chart-area">
+            <div class="legend-row" id="legend-uva"></div>
+            <div id="loading-uva" class="loading"><div class="spinner"></div> Cargando datos</div>
+            <canvas id="chart-uva" style="display:none"></canvas>
+            <p class="source-note" id="uva-source-note">Datos: Observatorio Junta de Andalucía. Referencia regional (Andalucía), no índice nacional.</p>
+          </div>
+          <aside class="block-summary-area">
+            <div class="panel-subtitle">Resumen (€/kg)</div>
+            <div class="wine-cards" id="wine-cards-uva"></div>
+          </aside>
+        </div>
+      </section>
+    </div>
 
-  </div><!-- /page-indice -->
 
   <!-- ── PÁGINA 2: AÑADIR DATOS ─────────────────────────────────────────── -->
   <div class="page" id="page-añadir">
@@ -1463,15 +1552,32 @@
 
   // ── Estado ────────────────────────────────────────────────────────────────────
   let allData         = [];
+  let allUvaData      = [];
   let activeFilterHl  = 'ALL';
   let activeFilterHg  = 'ALL';
+  let activeFilterUvaType = 'TINTA';
+  let activeVariety   = 'SIN ESPECIFICAR';
   let activeAbv       = 'ALL';
-  let activePreset    = 'all';   // 'all' | '4w' | '3m' | 'year' | 'campaign'
-  let activeCampaign  = null;   // ej. "2024/2025" o null
-  // dateWindow: { minYear, minWeek, maxYear, maxWeek } or null = all
-  let dateWindow      = null;
+  let activeScope     = 'hl';
   let chartHl         = null;
   let chartHg         = null;
+  let chartUva        = null;
+  let dataReady       = false;
+
+  const TABLE_UVA = 'Precio Uva';
+  const UVA_COLOR = { TINTA: '#C0392B', BLANCA: '#D4922A' };
+  const GRAPE_TYPE_LABEL = { TINTA: 'Tinta', BLANCA: 'Blanca' };
+  const INDICES_PAGES = ['indices', 'indice-hl', 'indice-hg', 'indice-uva'];
+
+  const pageState = {
+    hl:  { activePreset: 'current-campaign', activeCampaign: null, dateWindow: null },
+    hg:  { activePreset: 'current-campaign', activeCampaign: null, dateWindow: null },
+    uva: { activePreset: 'current-campaign', activeCampaign: null, dateWindow: null },
+  };
+
+  function getScopeState(scope) {
+    return pageState[scope] || pageState.hl;
+  }
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   async function fetchData() {
@@ -1483,169 +1589,444 @@
     return res.json();
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────────
-  async function init() {
-    try {
-      const raw = await fetchData();
-      allData = raw.filter(d => d.year !== null && (d.price_eur_hl !== null || d.price_eur_hg !== null));
-
-      // Semana de calendario real
-      const { week: calWeek, year: calYear } = getCurrentCalendarWeek();
-      document.getElementById('topbar-week').textContent = `Semana ${calWeek} de ${calYear}`;
-
-      buildCampaignSelector();
-      setPreset('current-campaign');
-    } catch (e) {
-      console.error('Error en init():', e);
-      document.getElementById('loading-hl').style.display = 'none';
-      document.getElementById('loading-hg').style.display = 'none';
-      const box = document.getElementById('error-box');
-      // Distinguir error de red (CORS/fetch) de error de JS en el renderizado
-      const isNetworkError = e instanceof TypeError && (e.message.includes('fetch') || e.message.includes('Failed') || e.message.includes('network'));
-      if (isNetworkError) {
-        box.style.display = 'block';
-      } else {
-        box.innerHTML = `<strong>⚠ Error interno</strong>Los datos se recibieron pero hubo un problema al renderizar la gráfica.<br><code>${e.message}</code>`;
-        box.style.display = 'block';
-      }
-    }
-  }
-
-  // ── Construir selector de campaña ─────────────────────────────────────────────
-  function buildCampaignSelector() {
-    const campaigns = new Set();
-    allData.forEach(d => campaigns.add(getCampaignKey(d.year, d.week)));
-    const sorted = [...campaigns].sort();
-
-    const sel = document.getElementById('campaign-select');
-    sorted.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = `Campaña ${c}`;
-      sel.appendChild(opt);
+  async function fetchUvaData() {
+    const url = `${SUPABASE_URL}/rest/v1/${encodeURIComponent(TABLE_UVA)}?select=week,year,grape_type,grape_subtype,eur_kg,source&order=year.asc,week.asc`;
+    const res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
-
-    sel.addEventListener('change', () => {
-      if (!sel.value) return;
-      activeCampaign = sel.value;
-      setPreset('campaign');
-    });
+    if (!res.ok) throw new Error(`HTTP uva ${res.status}`);
+    return res.json();
   }
 
-  // ── Aplicar preset ────────────────────────────────────────────────────────────
-  function setPreset(preset) {
-    activePreset = preset;
-
-    // Resetear select de campaña si no es ese preset
-    const sel = document.getElementById('campaign-select');
-    if (preset !== 'campaign') {
-      sel.value = '';
-      sel.classList.remove('active');
-    } else {
-      sel.classList.add('active');
-    }
-
-    // Calcular dateWindow según preset
-    const now = new Date();
-    const { week: nowWeek, year: nowYear } = getCurrentCalendarWeek();
-
-    if (preset === 'all') {
-      dateWindow = null;
-
-    } else if (preset === '4w') {
-      let minWeek = nowWeek - 4;
-      let minYear = nowYear;
-      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
-      dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
-
-    } else if (preset === '3m') {
-      let minWeek = nowWeek - 13;
-      let minYear = nowYear;
-      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
-      dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
-
-    } else if (preset === 'year') {
-      dateWindow = { minYear: nowYear, minWeek: 1, maxYear: nowYear, maxWeek: 52 };
-
-    } else if (preset === 'campaign') {
-      if (!activeCampaign) { dateWindow = null; }
-      else { dateWindow = campaignToBounds(activeCampaign); }
-
-    } else if (preset === 'current-campaign') {
-      const currentCampaign = getCampaignKey(nowYear, nowWeek);
-      activeCampaign = currentCampaign;
-      dateWindow = campaignToBounds(currentCampaign);
-      sel.value = currentCampaign;
-      sel.classList.add('active');
-
-    } else if (preset === 'prev-campaign') {
-      const currentCampaign = getCampaignKey(nowYear, nowWeek);
-      const [startY] = currentCampaign.split('/').map(Number);
-      const prevCampaign = `${startY - 1}/${startY}`;
-      activeCampaign = prevCampaign;
-      dateWindow = campaignToBounds(prevCampaign);
-      sel.value = prevCampaign;
-      sel.classList.add('active');
-    }
-
-    // Actualizar botones activos
-    document.querySelectorAll('.preset-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.preset === preset);
-    });
-
-    // Actualizar etiqueta de rango
-    updateRangeLabel();
-
-    if (chartHl) { chartHl.destroy(); chartHl = null; }
-    if (chartHg) { chartHg.destroy(); chartHg = null; }
-    updatePanel();
-    renderCharts();
+  function priceUva(row) {
+    return parseEuropeanNumber(row.eur_kg);
   }
 
-  // ── Etiqueta de rango visible ─────────────────────────────────────────────────
-  function updateRangeLabel() {
-    const el = document.getElementById('date-range-label');
-    if (!el) return;
-    if (!dateWindow) { el.textContent = 'Todo el histórico'; return; }
-    const { minYear, minWeek, maxYear, maxWeek } = dateWindow;
-    const d1 = fmtDate(isoWeekToDate(minYear, minWeek).getTime(), true);
-    const d2 = fmtDate(isoWeekToDate(maxYear, maxWeek).getTime(), true);
-    el.textContent = `${d1} → ${d2}`;
-  }
-
-  // ── Datos filtrados ───────────────────────────────────────────────────────────
-  function rowInWindow(d) {
-    if (!dateWindow) return true;
-    const { minYear, minWeek, maxYear, maxWeek } = dateWindow;
+  function rowInWindowForScope(d, scope) {
+    const state = getScopeState(scope);
+    if (!state.dateWindow) return true;
+    const { minYear, minWeek, maxYear, maxWeek } = state.dateWindow;
     const y = parseInt(d.year), w = parseInt(d.week);
     const after  = y > minYear || (y === minYear && w >= minWeek);
     const before = y < maxYear || (y === maxYear && w <= maxWeek);
     return after && before;
   }
 
-  /** Fila base: tipo + ventana temporal (sin ABV). Para €/hl y agregación. */
+  function rowInWindow(d) {
+    return rowInWindowForScope(d, activeScope);
+  }
+
+  function sortRowsDesc(rows) {
+    return [...rows].sort((a, b) => b.year !== a.year ? b.year - a.year : b.week - a.week);
+  }
+
+  function sparklineSvg(values, color) {
+    if (!values || values.length < 2) return '';
+    const w = 140, h = 36;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const pts = values.map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - ((v - min) / range) * (h - 4) - 2;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/></svg>`;
+  }
+
+  function getLatestWineRow(wineType, priceField) {
+    const rows = allData.filter(d => d.wine_type === wineType && d[priceField] != null);
+    return rows.length ? sortRowsDesc(rows)[0] : null;
+  }
+
+  function getLatestUvaRow(grapeType, subtype) {
+    const rows = allUvaData.filter(d => d.grape_type === grapeType && d.grape_subtype === subtype && priceUva(d) !== null);
+    return rows.length ? sortRowsDesc(rows)[0] : null;
+  }
+
+  function getSparklineValues(rows, priceFn, count = 10) {
+    const seen = new Set();
+    const values = [];
+    for (const row of sortRowsDesc(rows)) {
+      const key = `${row.year}-${row.week}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const v = priceFn(row);
+      if (v === null) continue;
+      values.unshift(v);
+      if (values.length >= count) break;
+    }
+    return values;
+  }
+
+  function renderIndicesLanding() {
+    const grid = document.getElementById('indices-grid');
+    if (!grid) return;
+
+    const hlRow = getLatestWineRow('TINTO', 'price_eur_hl');
+    const hgRow = getLatestWineRow('TINTO', 'price_eur_hg');
+    const uvaRow = getLatestUvaRow('TINTA', 'SIN ESPECIFICAR');
+
+    const cards = [
+      {
+        id: 'hl',
+        title: 'Precio por hectolitro',
+        price: hlRow ? parseEuropeanNumber(hlRow.price_eur_hl) : null,
+        unit: '€/hl',
+        spark: sparklineSvg(getSparklineValues(allData.filter(d => d.wine_type === 'TINTO' && d.price_eur_hl), r => parseEuropeanNumber(r.price_eur_hl)), '#2563EB'),
+      },
+      {
+        id: 'hg',
+        title: 'Precio por hectogrado',
+        price: hgRow ? parseEuropeanNumber(hgRow.price_eur_hg) : null,
+        unit: '€/hg',
+        spark: sparklineSvg(getSparklineValues(allData.filter(d => d.wine_type === 'TINTO' && d.price_eur_hg && Math.round(parseEuropeanNumber(d.abv) || 0) === 13), priceHg), '#EA580C'),
+      },
+      {
+        id: 'uva',
+        title: 'Precio por kilo de uva',
+        price: uvaRow ? priceUva(uvaRow) : null,
+        unit: '€/kg',
+        spark: sparklineSvg(getSparklineValues(allUvaData.filter(d => d.grape_type === 'TINTA' && d.grape_subtype === 'SIN ESPECIFICAR'), priceUva), '#059669'),
+      },
+    ];
+
+    grid.innerHTML = cards.map(c => `
+      <button type="button" class="index-card index-card--${c.id}" onclick="navigateToIndexDetail('${c.id}')">
+        <div class="index-card-head">
+          <h3>${c.title}</h3>
+          <div class="index-card-price">${c.price !== null ? c.price.toFixed(2).replace('.', ',') + ' ' + c.unit : '—'}</div>
+        </div>
+        <div class="index-card-spark">${c.spark}</div>
+        <span class="index-card-cta">Ver evolución →</span>
+      </button>`).join('');
+  }
+
+  function buildCampaignSelectors() {
+    const campaigns = new Set();
+    allData.forEach(d => campaigns.add(getCampaignKey(d.year, d.week)));
+    allUvaData.forEach(d => campaigns.add(getCampaignKey(d.year, d.week)));
+    const sorted = [...campaigns].sort();
+
+    ['hl', 'hg', 'uva'].forEach(scope => {
+      const sel = document.getElementById(`campaign-select-${scope}`);
+      if (!sel || sel.dataset.built) return;
+      sel.dataset.built = '1';
+      sorted.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `Campaña ${c}`;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => {
+        getScopeState(scope).activeCampaign = sel.value;
+        setPreset('campaign', scope);
+      });
+    });
+  }
+
+  function updateRangeLabel(scope) {
+    const el = document.getElementById(`date-range-label-${scope}`);
+    if (!el) return;
+    const state = getScopeState(scope);
+    if (!state.dateWindow) { el.textContent = 'Todo el histórico'; return; }
+    const { minYear, minWeek, maxYear, maxWeek } = state.dateWindow;
+    el.textContent = `${fmtDate(isoWeekToDate(minYear, minWeek).getTime(), true)} → ${fmtDate(isoWeekToDate(maxYear, maxWeek).getTime(), true)}`;
+  }
+
+  function setPreset(preset, scope, options = {}) {
+    const render = options.render !== false;
+    const state = getScopeState(scope);
+    state.activePreset = preset;
+    const sel = document.getElementById(`campaign-select-${scope}`);
+
+    if (sel) {
+      if (preset !== 'campaign') { sel.value = ''; sel.classList.remove('active'); }
+      else sel.classList.add('active');
+    }
+
+    const { week: nowWeek, year: nowYear } = getCurrentCalendarWeek();
+
+    if (preset === 'all') state.dateWindow = null;
+    else if (preset === '4w') {
+      let minWeek = nowWeek - 4, minYear = nowYear;
+      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
+      state.dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
+    } else if (preset === '3m') {
+      let minWeek = nowWeek - 13, minYear = nowYear;
+      if (minWeek <= 0) { minWeek += 52; minYear -= 1; }
+      state.dateWindow = { minYear, minWeek, maxYear: nowYear, maxWeek: nowWeek };
+    } else if (preset === 'year') {
+      state.dateWindow = { minYear: nowYear, minWeek: 1, maxYear: nowYear, maxWeek: 52 };
+    } else if (preset === 'campaign') {
+      state.dateWindow = state.activeCampaign ? campaignToBounds(state.activeCampaign) : null;
+    } else if (preset === 'current-campaign') {
+      const currentCampaign = getCampaignKey(nowYear, nowWeek);
+      state.activeCampaign = currentCampaign;
+      state.dateWindow = campaignToBounds(currentCampaign);
+      if (sel) { sel.value = currentCampaign; sel.classList.add('active'); }
+    }
+
+    document.querySelectorAll(`.preset-btn[data-scope="${scope}"]`).forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === preset);
+    });
+    updateRangeLabel(scope);
+    if (!render) return;
+
+    activeScope = scope;
+    if (scope === 'hl') {
+      if (chartHl) { chartHl.destroy(); chartHl = null; }
+      updatePanel('hl'); renderCharts('hl');
+    } else if (scope === 'hg') {
+      if (chartHg) { chartHg.destroy(); chartHg = null; }
+      updatePanel('hg'); renderCharts('hg');
+    } else if (scope === 'uva') {
+      if (chartUva) { chartUva.destroy(); chartUva = null; }
+      updateUvaPanel(); renderUvaChart();
+    }
+  }
+
+  function getFilteredUva() {
+    return allUvaData.filter(d => {
+      if (!rowInWindowForScope(d, 'uva')) return false;
+      if (d.grape_type !== activeFilterUvaType) return false;
+      if (activeVariety && d.grape_subtype !== activeVariety) return false;
+      return priceUva(d) !== null;
+    });
+  }
+
+  function populateVarietySelect() {
+    const sel = document.getElementById('variety-select');
+    if (!sel) return;
+    const varieties = [...new Set(allUvaData.filter(d => d.grape_type === activeFilterUvaType).map(d => d.grape_subtype))].sort((a, b) => {
+      if (a === 'SIN ESPECIFICAR') return -1;
+      if (b === 'SIN ESPECIFICAR') return 1;
+      return a.localeCompare(b, 'es');
+    });
+    if (!varieties.includes(activeVariety)) {
+      activeVariety = varieties.includes('SIN ESPECIFICAR') ? 'SIN ESPECIFICAR' : (varieties[0] || 'SIN ESPECIFICAR');
+    }
+    sel.innerHTML = varieties.map(v => `<option value="${v}">${v === 'SIN ESPECIFICAR' ? 'Sin especificar' : v}</option>`).join('');
+    sel.value = activeVariety;
+  }
+
+  function buildUvaDatasets() {
+    const rows = getFilteredUva().sort((a, b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
+    const years = [...new Set(rows.map(d => String(d.year)))].sort();
+    const points = [];
+    years.forEach(year => {
+      rows.filter(d => String(d.year) === year).forEach(d => {
+        const v = priceUva(d);
+        if (v === null) return;
+        points.push({ x: isoWeekToDate(parseInt(d.year), parseInt(d.week)).getTime(), y: v, week: d.week, year: d.year });
+      });
+    });
+    if (!points.length) return { datasets: [], years: [] };
+    const color = UVA_COLOR[activeFilterUvaType] || '#10B981';
+    const varLabel = activeVariety === 'SIN ESPECIFICAR' ? 'Sin especificar' : activeVariety;
+    return {
+      datasets: [{
+        label: `${GRAPE_TYPE_LABEL[activeFilterUvaType]} · ${varLabel}`,
+        data: points,
+        borderColor: color,
+        backgroundColor: color + '15',
+        pointBackgroundColor: color,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 7,
+        tension: 0.4,
+        fill: false,
+        _years: years,
+      }],
+      years,
+    };
+  }
+
+  function buildUvaCardsHtml() {
+    const rows = getFilteredUva().sort((a, b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
+    if (!rows.length) return '';
+    const prices = rows.map(priceUva).filter(v => v !== null);
+    if (!prices.length) return '';
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const first = priceUva(rows[0]);
+    const last = priceUva(rows[rows.length - 1]);
+    if (first === null || last === null || first === 0) return '';
+    const pct = ((last - first) / first) * 100;
+    const isUp = pct > 0.05, isDn = pct < -0.05;
+    const color = UVA_COLOR[activeFilterUvaType] || '#10B981';
+    const varLabel = activeVariety === 'SIN ESPECIFICAR' ? 'Sin especificar' : activeVariety;
+    return `<div class="wine-card">
+      <div class="wine-card-header">
+        <div class="wine-card-name"><div class="wine-card-dot" style="background:${color}"></div>🍇 ${GRAPE_TYPE_LABEL[activeFilterUvaType]} · ${varLabel}</div>
+        <span class="wine-card-pct ${isUp ? 'up' : isDn ? 'down' : 'flat'}">${isUp ? '↑' : isDn ? '↓' : '→'} ${Math.abs(pct).toFixed(1)}%</span>
+      </div>
+      <div class="wine-card-price">${avg.toFixed(2).replace('.', ',')} €</div>
+      <div class="wine-card-sub">precio medio €/kg</div>
+      <div class="wine-card-range"><span>${first.toFixed(2).replace('.', ',')} €</span> → <span>${last.toFixed(2).replace('.', ',')} €</span></div>
+    </div>`;
+  }
+
+  function updateUvaPanel() {
+    const el = document.getElementById('wine-cards-uva');
+    if (el) el.innerHTML = buildUvaCardsHtml();
+    const note = document.getElementById('uva-source-note');
+    const src = getFilteredUva()[0]?.source || allUvaData[0]?.source;
+    if (note && src) note.textContent = `Datos: ${src}. Referencia regional (Andalucía), no índice nacional.`;
+  }
+
+  function renderUvaChart() {
+    activeScope = 'uva';
+    try {
+      const { datasets, years } = buildUvaDatasets();
+      buildLegendHtml(datasets, 'legend-uva');
+      const loadingEl = document.getElementById('loading-uva');
+      const canvas = document.getElementById('chart-uva');
+      if (chartUva) { chartUva.destroy(); chartUva = null; }
+      if (!datasets.length) {
+        loadingEl.innerHTML = 'No hay datos de uva para este periodo.';
+        loadingEl.style.display = 'flex';
+        canvas.style.display = 'none';
+        return;
+      }
+      loadingEl.style.display = 'none';
+      canvas.style.display = 'block';
+      const ch = createLineChart(canvas, datasets, years, '€ / kg', '€/kg');
+      if (!ch) return;
+      ch._vinexiaYears = years;
+      chartUva = ch;
+    } catch (e) {
+      console.error('Error renderizando gráfica uva:', e);
+    }
+  }
+
+  function refreshUvaFilters() {
+    populateVarietySelect();
+    if (chartUva) { chartUva.destroy(); chartUva = null; }
+    updateUvaPanel();
+    renderUvaChart();
+  }
+
+  async function init() {
+    try {
+      const [raw, rawUva] = await Promise.all([fetchData(), fetchUvaData()]);
+      allData = raw.filter(d => d.year !== null && (d.price_eur_hl !== null || d.price_eur_hg !== null));
+      allUvaData = rawUva.filter(d => d.year !== null && d.eur_kg !== null);
+      dataReady = true;
+      const { week: calWeek, year: calYear } = getCurrentCalendarWeek();
+      document.getElementById('topbar-week').textContent = `Semana ${calWeek} de ${calYear}`;
+      buildCampaignSelectors();
+      setPreset('current-campaign', 'hl', { render: false });
+      setPreset('current-campaign', 'hg', { render: false });
+      setPreset('current-campaign', 'uva', { render: false });
+      renderIndicesLanding();
+    } catch (e) {
+      console.error('Error en init():', e);
+      ['loading-hl', 'loading-hg', 'loading-uva'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      const box = document.getElementById('error-box');
+      const isNetworkError = e instanceof TypeError && (e.message.includes('fetch') || e.message.includes('Failed') || e.message.includes('network'));
+      if (box) {
+        if (isNetworkError) box.style.display = 'block';
+        else { box.innerHTML = `<strong>⚠ Error interno</strong> ${e.message}`; box.style.display = 'block'; }
+      }
+    }
+  }
+
+  function navigateToIndexDetail(detail) {
+    navigateTo(`indice-${detail}`);
+  }
+
+  function renderDetailCharts(page) {
+    if (!dataReady) return;
+    if (page === 'indice-hl') {
+      activeScope = 'hl';
+      updatePanel('hl');
+      renderCharts('hl');
+      if (chartHl) chartHl.resize();
+    } else if (page === 'indice-hg') {
+      activeScope = 'hg';
+      syncAbvFilterVisibility();
+      updatePanel('hg');
+      renderCharts('hg');
+      if (chartHg) chartHg.resize();
+    } else if (page === 'indice-uva') {
+      activeScope = 'uva';
+      populateVarietySelect();
+      updateUvaPanel();
+      renderUvaChart();
+      if (chartUva) chartUva.resize();
+    }
+  }
+
+  function activateDetailPage(page) {
+    requestAnimationFrame(() => renderDetailCharts(page));
+  }
+
+  function navigateTo(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`page-${page}`).classList.add('active');
+    if (INDICES_PAGES.includes(page)) document.getElementById('nav-indices').classList.add('active');
+    else { const nav = document.getElementById(`nav-${page}`); if (nav) nav.classList.add('active'); }
+
+    const titles = {
+      indices: 'Índices de mercado',
+      'indice-hl': 'Precio por hectolitro',
+      'indice-hg': 'Precio por hectogrado',
+      'indice-uva': 'Precio por kilo de uva',
+      'añadir': 'Añadir datos',
+      calculadora: 'Calculadora de unidades',
+    };
+    document.getElementById('topbar-title').textContent = titles[page] || '';
+    if (page === 'indices' && dataReady) renderIndicesLanding();
+    if (page.startsWith('indice-')) activateDetailPage(page);
+    if (page === 'añadir') {
+      document.getElementById('form-success').classList.remove('visible');
+      document.getElementById('btn-submit').disabled = false;
+    }
+    closeSidebar();
+  }
+
+  document.querySelectorAll('.preset-btn[data-scope]').forEach(btn => {
+    btn.addEventListener('click', () => setPreset(btn.dataset.preset, btn.dataset.scope));
+  });
+
+  document.querySelectorAll('.f-btn[data-target="uva"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilterUvaType = btn.dataset.filter;
+      document.querySelectorAll('#filters-uva .f-btn').forEach(b => b.classList.remove('on-tinta', 'on-blanca-uva'));
+      btn.classList.add(activeFilterUvaType === 'TINTA' ? 'on-tinta' : 'on-blanca-uva');
+      activeVariety = 'SIN ESPECIFICAR';
+      refreshUvaFilters();
+    });
+  });
+
+  document.getElementById('variety-select')?.addEventListener('change', e => {
+    activeVariety = e.target.value;
+    refreshUvaFilters();
+  });
+
+  syncAbvFilterVisibility();
+  init();
+
+
+
   function rowMatchesTypeAndTime(d, typeFilter) {
     const typeMatch = typeFilter === 'ALL' || d.wine_type === typeFilter;
     return rowInWindow(d) && typeMatch;
   }
 
-  /** Solo gráfica €/hg y panel derecho coherente con hg: incluye filtro ABV en Tinto. */
   function getFilteredHg() {
     return allData.filter(d => {
       if (!rowMatchesTypeAndTime(d, activeFilterHg)) return false;
-      if (d.wine_type === 'MOSTO') return false; // Mosto no permitido en HG
+      if (d.wine_type === 'MOSTO') return false;
 
       const abv = parseEuropeanNumber(d.abv);
       const roundedAbv = abv !== null ? Math.round(abv) : null;
 
-      // Blanco solo a 11, Tinto solo a 13 o 15
       if (d.wine_type === 'BLANCO' && roundedAbv !== 11) return false;
       if (d.wine_type === 'TINTO' && roundedAbv !== 13 && roundedAbv !== 15) return false;
 
-      // Filtrar por ABV si no es ALL
-      if (activeAbv !== 'ALL') {
-        if (roundedAbv !== Number(activeAbv)) return false;
-      }
+      if (activeAbv !== 'ALL' && roundedAbv !== Number(activeAbv)) return false;
 
       return true;
     });
@@ -2007,6 +2388,21 @@
       </div>`).join('');
   }
 
+
+  function yAxisDecimalPlaces(datasets) {
+    const vals = datasets.flatMap(ds => ds.data.map(p => p.y)).filter(v => Number.isFinite(v));
+    if (!vals.length) return 2;
+    const range = Math.max(...vals) - Math.min(...vals);
+    const max = Math.max(...vals);
+    if (max < 10 || range < 5) return 2;
+    if (max < 100 || range < 25) return 1;
+    return 0;
+  }
+
+  function formatEuroAxisValue(v, decimals) {
+    return v.toFixed(decimals).replace('.', ',') + ' €';
+  }
+
   function createLineChart(canvas, datasets, years, yAxisTitle, tooltipUnit) {
     const allTs = datasets.flatMap(ds => ds.data.map(p => p.x));
     if (!allTs.length) return null;
@@ -2056,7 +2452,7 @@
                 const raw = items[0].raw;
                 return fmtDate(raw.x, true) + ` · Sem. ${raw.week}`;
               },
-              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2)} ${tooltipUnit}`,
+              label: item => `  ${item.dataset.label}: ${item.parsed.y.toFixed(2).replace('.', ',')} ${tooltipUnit}`,
             }
           },
           yearLines: { id: 'yearLines' }
@@ -2095,7 +2491,7 @@
             },
             ticks: {
               font: { family: 'Inter', size: 11 }, color: '#9CA3AF',
-              callback: v => v.toFixed(0) + ' €',
+              callback: v => formatEuroAxisValue(v, yAxisDecimalPlaces(datasets)),
             },
             grid: { color: '#F3F4F6' },
             border: { color: '#E5E7EB' },
@@ -2114,6 +2510,7 @@
 
       if (chartRef === 'hl' && chartHl) { chartHl.destroy(); chartHl = null; }
       if (chartRef === 'hg' && chartHg) { chartHg.destroy(); chartHg = null; }
+      if (chartRef === 'uva' && chartUva) { chartUva.destroy(); chartUva = null; }
 
       if (!datasets.length) {
         loadingEl.innerHTML = '<div class="spinner"></div>Sin datos para los filtros seleccionados';
@@ -2129,9 +2526,17 @@
       if (!ch) return;
       ch._vinexiaYears = years;
       if (chartRef === 'hl') chartHl = ch;
-      else chartHg = ch;
+      else if (chartRef === 'hg') chartHg = ch;
+      else if (chartRef === 'uva') chartUva = ch;
     } catch (e) {
       console.error(`Error renderizando gráfica ${chartRef}:`, e);
+      const loadingEl = document.getElementById(loadingId);
+      const canvas = document.getElementById(canvasId);
+      if (loadingEl) {
+        loadingEl.innerHTML = 'Error al cargar la gráfica. Recarga la página.';
+        loadingEl.style.display = 'flex';
+      }
+      if (canvas) canvas.style.display = 'none';
     }
   }
 
@@ -2197,12 +2602,15 @@
 
   document.querySelectorAll('.f-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.dataset.target; // 'hl' o 'hg'
+      const target = btn.dataset.target; // 'hl', 'hg', or 'uva'
+      if (target === 'uva') return;
       const filter = btn.dataset.filter;
 
       if (target === 'hl') {
+        activeScope = 'hl';
         activeFilterHl = filter;
-      } else {
+      } else if (target === 'hg') {
+        activeScope = 'hg';
         activeFilterHg = filter;
         if (!(activeFilterHg === 'TINTO' || activeFilterHg === 'ALL')) {
           activeAbv = 'ALL';
@@ -2228,39 +2636,13 @@
   // ── Filtro ABV (pills) ────────────────────────────────────────────────────────
   document.querySelectorAll('.abv-pill').forEach(pill => {
     pill.addEventListener('click', () => {
+      activeScope = 'hg';
       activeAbv = pill.dataset.abv;
       document.querySelectorAll('.abv-pill').forEach(p => p.classList.toggle('active', p === pill));
       if (chartHg) { chartHg.destroy(); chartHg = null; }
       updatePanel('hg'); renderCharts('hg');
     });
   });
-
-  // ── Botones preset ────────────────────────────────────────────────────────────
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => setPreset(btn.dataset.preset));
-  });
-
-  syncAbvFilterVisibility();
-  init();
-
-  // ── Navegación entre páginas ──────────────────────────────────────────────────
-  function navigateTo(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-    document.getElementById(`page-${page}`).classList.add('active');
-    document.getElementById(`nav-${page}`).classList.add('active');
-
-    const titles = { indice: 'Dashboard de precios', añadir: 'Añadir datos', calculadora: 'Calculadora de unidades' };
-    document.getElementById('topbar-title').textContent = titles[page] || '';
-
-    if (page === 'añadir') {
-      document.getElementById('form-success').classList.remove('visible');
-      document.getElementById('btn-submit').disabled = false;
-    }
-
-    closeSidebar(); // cierra el menú en móvil al navegar
-  }
 
   // ── Calculadora ───────────────────────────────────────────────────────────────
   let precioUnit = 'hl'; // 'hl' or 'hg' for the standalone price tab
