@@ -1326,7 +1326,7 @@
 
     <div class="form-block">
       <h2>Calculadora de unidades</h2>
-      <p class="form-desc">Convierte entre hectolitros y hectogrados, o estima el precio de tu partida. Un hectogrado equivale a 1 hl × 1% vol.</p>
+      <p class="form-desc">Convierte entre hectolitros y hectogrados, o estima el precio de vino o uva a granel. Un hectogrado equivale a 1 hl × 1% vol.</p>
 
       <div class="calc-tabs" style="margin-top: 24px;">
         <button class="calc-tab active" id="tab-precio" onclick="switchCalcMode('precio')">Estimar precio</button>
@@ -1344,18 +1344,32 @@
               <option value="TINTO">Tinto</option>
               <option value="BLANCO">Blanco</option>
               <option value="MOSTO">Mosto</option>
+              <option value="UVA">Uva</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="calc-precio-unit-group">
             <label>Unidad</label>
             <select class="form-select" id="calc-precio-unit" onchange="switchPrecioUnit(this.value)">
               <option value="hl">Hectolitros</option>
               <option value="hg">Hectogrados</option>
             </select>
           </div>
+          <div class="form-group" id="calc-precio-grape-type-group" style="display:none;">
+            <label>Tipo de uva</label>
+            <select class="form-select" id="calc-precio-grape-type" onchange="populateCalcVariedadSelect(); calcPrecio();">
+              <option value="TINTA">Tinta</option>
+              <option value="BLANCA">Blanca</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-grid">
+          <div class="form-group" id="calc-precio-variedad-group" style="display:none;">
+            <label>Variedad</label>
+            <select class="form-select" id="calc-precio-variedad" onchange="calcPrecio()">
+              <option value="SIN ESPECIFICAR">Sin especificar</option>
+            </select>
+          </div>
           <div class="form-group">
             <label id="calc-precio-qty-label">Hectolitros (hl)</label>
             <input class="form-input" type="number" id="calc-precio-qty" placeholder="ej. 150" min="0" step="0.01" oninput="calcPrecio()" />
@@ -1366,6 +1380,7 @@
           </div>
         </div>
         <p class="calc-mosto-note" id="calc-mosto-note" style="display:none;">El mosto no cotiza por grado — se usa el precio por hectolitro.</p>
+        <p class="calc-mosto-note" id="calc-uva-note" style="display:none;">Precio de referencia regional (Andalucía). Datos: Observatorio Junta de Andalucía.</p>
 
         <div class="calc-summary" id="calc-summary-precio">
           <div class="calc-summary-row">
@@ -2725,6 +2740,23 @@
     }
   }
 
+  function populateCalcVariedadSelect() {
+    const sel = document.getElementById('calc-precio-variedad');
+    const grapeType = document.getElementById('calc-precio-grape-type').value;
+    if (!sel) return;
+    const prev = sel.value;
+    const varieties = [...new Set(allUvaData.filter(d => d.grape_type === grapeType).map(d => d.grape_subtype))].sort((a, b) => {
+      if (a === 'SIN ESPECIFICAR') return -1;
+      if (b === 'SIN ESPECIFICAR') return 1;
+      return a.localeCompare(b, 'es');
+    });
+    const defaultVariety = varieties.includes('SIN ESPECIFICAR') ? 'SIN ESPECIFICAR' : (varieties[0] || 'SIN ESPECIFICAR');
+    sel.innerHTML = (varieties.length ? varieties : ['SIN ESPECIFICAR']).map(v =>
+      `<option value="${v}">${v === 'SIN ESPECIFICAR' ? 'Sin especificar' : v}</option>`
+    ).join('');
+    sel.value = varieties.includes(prev) ? prev : defaultVariety;
+  }
+
   function calcPrecio() {
     const tipo   = document.getElementById('calc-precio-tipo').value;
     const qty    = parseFloat(document.getElementById('calc-precio-qty').value);
@@ -2732,6 +2764,29 @@
     const refEl  = document.getElementById('calc-precio-ref');
 
     if (!tipo) { valEl.textContent = '—'; valEl.classList.add('empty'); refEl.textContent = ''; return; }
+
+    if (tipo === 'UVA') {
+      const grapeType = document.getElementById('calc-precio-grape-type').value;
+      const variety   = document.getElementById('calc-precio-variedad').value;
+      const latest    = getLatestUvaRow(grapeType, variety);
+      const unitPrice = latest ? priceUva(latest) : null;
+      const varLabel  = variety === 'SIN ESPECIFICAR' ? 'Sin especificar' : variety;
+
+      if (isNaN(qty) || qty <= 0 || unitPrice === null) {
+        valEl.textContent = '—';
+        valEl.classList.add('empty');
+        refEl.textContent = unitPrice === null
+          ? (allUvaData.length === 0 ? 'Datos de uva aún no disponibles' : `Sin datos de precio para uva ${GRAPE_TYPE_LABEL[grapeType].toLowerCase()} · ${varLabel}`)
+          : '';
+        return;
+      }
+
+      const total = qty * unitPrice;
+      valEl.textContent = total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+      valEl.classList.remove('empty');
+      refEl.textContent = `Referencia: ${unitPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/kg · ${GRAPE_TYPE_LABEL[grapeType]} · ${varLabel} · Semana ${latest.week} de ${latest.year} · Andalucía`;
+      return;
+    }
 
     const isMosto     = tipo === 'MOSTO';
     const priceField  = (precioUnit === 'hg' && !isMosto) ? 'price_eur_hg' : 'price_eur_hl';
@@ -2755,19 +2810,40 @@
   }
 
   function onProductoChange() {
-    const tipo      = document.getElementById('calc-precio-tipo').value;
-    const isMosto   = tipo === 'MOSTO';
-    const abvGroup  = document.getElementById('calc-precio-abv-group');
-    const mostoNote = document.getElementById('calc-mosto-note');
-    const unitSel   = document.getElementById('calc-precio-unit');
-    abvGroup.style.display  = isMosto ? 'none' : '';
+    const tipo       = document.getElementById('calc-precio-tipo').value;
+    const isUva      = tipo === 'UVA';
+    const isMosto    = tipo === 'MOSTO';
+    const abvGroup   = document.getElementById('calc-precio-abv-group');
+    const mostoNote  = document.getElementById('calc-mosto-note');
+    const uvaNote    = document.getElementById('calc-uva-note');
+    const unitGroup  = document.getElementById('calc-precio-unit-group');
+    const grapeTypeGroup = document.getElementById('calc-precio-grape-type-group');
+    const variedadGroup  = document.getElementById('calc-precio-variedad-group');
+    const unitSel    = document.getElementById('calc-precio-unit');
+    const qtyLabel   = document.getElementById('calc-precio-qty-label');
+    const qtyInput   = document.getElementById('calc-precio-qty');
+
+    unitGroup.style.display = isUva ? 'none' : '';
+    grapeTypeGroup.style.display = isUva ? '' : 'none';
+    variedadGroup.style.display = isUva ? '' : 'none';
+    abvGroup.style.display = (isMosto || isUva) ? 'none' : '';
     mostoNote.style.display = isMosto ? '' : 'none';
+    uvaNote.style.display = isUva ? '' : 'none';
+
+    if (isUva) {
+      populateCalcVariedadSelect();
+      qtyLabel.textContent = 'Kilogramos (kg)';
+      qtyInput.placeholder = 'ej. 5000';
+    } else {
+      switchPrecioUnit(precioUnit);
+    }
+
     // Force hl unit for Mosto since it has no hg price
     if (isMosto && precioUnit === 'hg') {
       unitSel.value = 'hl';
       switchPrecioUnit('hl');
     }
-    unitSel.options[1].disabled = isMosto; // disable Hectogrados option for Mosto
+    unitSel.options[1].disabled = isMosto;
   }
 
   function switchPrecioUnit(unit) {
