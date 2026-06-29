@@ -951,30 +951,36 @@
     /* ── Calculator page ─────────────────────────────────────────────────────── */
     .calc-tabs {
       display: flex;
-      gap: 8px;
+      gap: 0;
       margin-bottom: 28px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      background: var(--grey-light);
+      border-radius: 12px;
+      padding: 4px;
     }
 
     .calc-tab {
-      padding: 7px 18px;
+      flex: 1;
+      padding: 10px 12px;
       border-radius: 8px;
-      border: 1.5px solid var(--grey-light);
+      border: none;
       background: transparent;
       color: var(--grey);
       font-size: 13px;
       font-weight: 500;
+      text-align: center;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
       font-family: 'Inter', sans-serif;
     }
 
-    .calc-tab:hover { border-color: var(--ink); color: var(--ink); }
+    .calc-tab:hover:not(.active) { color: var(--ink); }
 
     .calc-tab.active {
-      background: var(--ink);
-      border-color: var(--ink);
-      color: #fff;
+      background: var(--white);
+      color: var(--ink);
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
     }
 
     .calc-formula-note {
@@ -1323,13 +1329,55 @@
       <p class="form-desc">Convierte entre hectolitros y hectogrados, o estima el precio de tu partida. Un hectogrado equivale a 1 hl × 1% vol.</p>
 
       <div class="calc-tabs" style="margin-top: 24px;">
-        <button class="calc-tab active" id="tab-hg" onclick="switchCalcMode('hg')">Convertir a Hectogrados</button>
+        <button class="calc-tab active" id="tab-precio" onclick="switchCalcMode('precio')">Estimar precio</button>
+        <button class="calc-tab" id="tab-hg" onclick="switchCalcMode('hg')">Convertir a Hectogrados</button>
         <button class="calc-tab" id="tab-hl" onclick="switchCalcMode('hl')">Convertir a Hectolitros</button>
-        <button class="calc-tab" id="tab-precio" onclick="switchCalcMode('precio')">Estimar precio</button>
+      </div>
+
+      <!-- Modo: Estimar precio -->
+      <div id="calc-form-precio">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Producto</label>
+            <select class="form-select" id="calc-precio-tipo" onchange="onProductoChange(); calcPrecio();">
+              <option value="" disabled selected>— Seleccionar —</option>
+              <option value="TINTO">Tinto</option>
+              <option value="BLANCO">Blanco</option>
+              <option value="MOSTO">Mosto</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unidad</label>
+            <select class="form-select" id="calc-precio-unit" onchange="switchPrecioUnit(this.value)">
+              <option value="hl">Hectolitros</option>
+              <option value="hg">Hectogrados</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label id="calc-precio-qty-label">Hectolitros (hl)</label>
+            <input class="form-input" type="number" id="calc-precio-qty" placeholder="ej. 150" min="0" step="0.01" oninput="calcPrecio()" />
+          </div>
+          <div class="form-group" id="calc-precio-abv-group">
+            <label>Graduación (% vol)</label>
+            <input class="form-input" type="number" id="calc-precio-abv" placeholder="ej. 13" min="0" max="25" step="0.1" oninput="calcPrecio()" />
+          </div>
+        </div>
+        <p class="calc-mosto-note" id="calc-mosto-note" style="display:none;">El mosto no cotiza por grado — se usa el precio por hectolitro.</p>
+
+        <div class="calc-summary" id="calc-summary-precio">
+          <div class="calc-summary-row">
+            <span class="calc-summary-key">€ estimado</span>
+            <span class="calc-summary-val empty" id="calc-precio-value">—</span>
+          </div>
+          <div class="calc-summary-ref" id="calc-precio-ref"></div>
+        </div>
       </div>
 
       <!-- Modo: hl → hg -->
-      <div id="calc-form-hg">
+      <div id="calc-form-hg" style="display:none;">
         <div class="form-grid">
           <div class="form-group">
             <label>Hectolitros (hl)</label>
@@ -1407,48 +1455,6 @@
         <p class="calc-formula-note">
           Fórmula: <code>hl = hg ÷ % vol</code> — Ejemplo: 1.950 hg ÷ 13° = 150 hl
         </p>
-      </div>
-
-      <!-- Modo: Estimar precio -->
-      <div id="calc-form-precio" style="display:none;">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Producto</label>
-            <select class="form-select" id="calc-precio-tipo" onchange="onProductoChange(); calcPrecio();">
-              <option value="" disabled selected>— Seleccionar —</option>
-              <option value="TINTO">Tinto</option>
-              <option value="BLANCO">Blanco</option>
-              <option value="MOSTO">Mosto</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Unidad</label>
-            <select class="form-select" id="calc-precio-unit" onchange="switchPrecioUnit(this.value)">
-              <option value="hl">Hectolitros</option>
-              <option value="hg">Hectogrados</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label id="calc-precio-qty-label">Hectolitros (hl)</label>
-            <input class="form-input" type="number" id="calc-precio-qty" placeholder="ej. 150" min="0" step="0.01" oninput="calcPrecio()" />
-          </div>
-          <div class="form-group" id="calc-precio-abv-group">
-            <label>Graduación (% vol)</label>
-            <input class="form-input" type="number" id="calc-precio-abv" placeholder="ej. 13" min="0" max="25" step="0.1" oninput="calcPrecio()" />
-          </div>
-        </div>
-        <p class="calc-mosto-note" id="calc-mosto-note" style="display:none;">El mosto no cotiza por grado — se usa el precio por hectolitro.</p>
-
-        <div class="calc-summary" id="calc-summary-precio">
-          <div class="calc-summary-row">
-            <span class="calc-summary-key">€ estimado</span>
-            <span class="calc-summary-val empty" id="calc-precio-value">—</span>
-          </div>
-          <div class="calc-summary-ref" id="calc-precio-ref"></div>
-        </div>
       </div>
 
     </div>
