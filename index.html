@@ -1272,23 +1272,45 @@
           </div>
 
           <div class="form-group">
-            <label>Tipo de vino <span>*</span></label>
-            <select class="form-select" id="field-tipo" required>
+            <label>Producto <span>*</span></label>
+            <select class="form-select" id="field-tipo" onchange="onFieldTipoChange()" required>
               <option value="" disabled selected>— Seleccionar —</option>
-              <option value="BLANCO">Blanco</option>
-              <option value="TINTO">Tinto</option>
+              <option value="UVA">Uva</option>
+              <option value="VINO">Vino</option>
               <option value="MOSTO">Mosto</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label>Cantidad vendida (hl) <span>*</span></label>
-            <input class="form-input" type="number" id="field-hl" placeholder="ej. 150" min="0" step="0.01" required />
+          <div class="form-group" id="field-grape-type-group" style="display:none;">
+            <label>Tipo de uva <span>*</span></label>
+            <select class="form-select" id="field-grape-type" onchange="populateFieldVariedadList()">
+              <option value="TINTA">Tinta</option>
+              <option value="BLANCA">Blanca</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="field-wine-type-group" style="display:none;">
+            <label>Tipo de vino <span>*</span></label>
+            <select class="form-select" id="field-wine-type">
+              <option value="TINTO">Tinto</option>
+              <option value="BLANCO">Blanco</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="field-variedad-group" style="display:none;">
+            <label>Variedad</label>
+            <input class="form-input" type="text" id="field-variedad" list="field-variedad-list" placeholder="ej. Tempranillo" autocomplete="off" />
+            <datalist id="field-variedad-list"></datalist>
           </div>
 
           <div class="form-group">
+            <label><span id="field-cantidad-label">Cantidad vendida (hl)</span> <span>*</span></label>
+            <input class="form-input" type="number" id="field-cantidad" placeholder="ej. 150" min="0" step="0.01" required />
+          </div>
+
+          <div class="form-group" id="field-graduacion-group" style="display:none;">
             <label>Graduación (°) <span>*</span></label>
-            <input class="form-input" type="number" id="field-graduacion" placeholder="ej. 13" min="0" max="25" step="0.1" required />
+            <input class="form-input" type="number" id="field-graduacion" placeholder="ej. 13" min="0" max="25" step="0.1" />
           </div>
 
           <div class="form-group full">
@@ -1341,10 +1363,9 @@
             <label>Producto</label>
             <select class="form-select" id="calc-precio-tipo" onchange="onProductoChange(); calcPrecio();">
               <option value="" disabled selected>— Seleccionar —</option>
-              <option value="TINTO">Tinto</option>
-              <option value="BLANCO">Blanco</option>
-              <option value="MOSTO">Mosto</option>
               <option value="UVA">Uva</option>
+              <option value="VINO">Vino</option>
+              <option value="MOSTO">Mosto</option>
             </select>
           </div>
           <div class="form-group" id="calc-precio-unit-group">
@@ -1359,6 +1380,13 @@
             <select class="form-select" id="calc-precio-grape-type" onchange="populateCalcVariedadSelect(); calcPrecio();">
               <option value="TINTA">Tinta</option>
               <option value="BLANCA">Blanca</option>
+            </select>
+          </div>
+          <div class="form-group" id="calc-precio-wine-type-group" style="display:none;">
+            <label>Tipo de vino</label>
+            <select class="form-select" id="calc-precio-wine-type" onchange="calcPrecio()">
+              <option value="TINTO">Tinto</option>
+              <option value="BLANCO">Blanco</option>
             </select>
           </div>
         </div>
@@ -1406,9 +1434,8 @@
             <label>Producto</label>
             <select class="form-select" id="calc-type-hg" onchange="calcHG()">
               <option value="">— Sin estimación de precio —</option>
-              <option value="TINTO">Tinto</option>
-              <option value="BLANCO">Blanco</option>
-              <option value="MOSTO">Mosto</option>
+              <option value="TINTO">Vino Tinto</option>
+              <option value="BLANCO">Vino Blanco</option>
             </select>
           </div>
         </div>
@@ -1447,8 +1474,8 @@
             <label>Producto</label>
             <select class="form-select" id="calc-type-hl" onchange="calcHL()">
               <option value="">— Sin estimación de precio —</option>
-              <option value="TINTO">Tinto</option>
-              <option value="BLANCO">Blanco</option>
+              <option value="TINTO">Vino Tinto</option>
+              <option value="BLANCO">Vino Blanco</option>
             </select>
           </div>
         </div>
@@ -1540,6 +1567,12 @@
   // ── Config Supabase ───────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://ztteligyldpedbilvoev.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dGVsaWd5bGRwZWRiaWx2b2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0ODk5NjUsImV4cCI6MjA4NzA2NTk2NX0.YYq7lCufarLYNX0f5eRG4h6QKmfjhFZYufUFePVG0bs';
+
+  // ── Config Google Sheets (Añadir datos → "Desde Vinexia") ───────────────────────
+  // See wine-agent/apps_script/desde_vinexia_webapp.gs for the Web App source and
+  // deployment steps. Paste the deployed Web App URL and matching shared secret here.
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoseLGMRYiKsf5tjlsQdaivLqRnsoNPYlg6E4Lu7kzww8AM01A9_4QVIHTEMHGPDq0/exec';
+  const APPS_SCRIPT_TOKEN = 'placeholder_database';
   const TABLE = 'VinexiaV1';
 
   // ── Paleta ────────────────────────────────────────────────────────────────────
@@ -2789,9 +2822,10 @@
     }
 
     const isMosto     = tipo === 'MOSTO';
+    const wineType    = isMosto ? 'MOSTO' : document.getElementById('calc-precio-wine-type').value;
     const priceField  = (precioUnit === 'hg' && !isMosto) ? 'price_eur_hg' : 'price_eur_hl';
     const unitLabel   = (precioUnit === 'hg' && !isMosto) ? 'hg' : 'hl';
-    const latest      = getLatestPrice(tipo, priceField);
+    const latest      = getLatestPrice(wineType, priceField);
     const unitPrice   = latest ? parseEuropeanNumber(latest[priceField]) : null;
 
     if (isNaN(qty) || qty <= 0 || unitPrice === null) {
@@ -2812,12 +2846,14 @@
   function onProductoChange() {
     const tipo       = document.getElementById('calc-precio-tipo').value;
     const isUva      = tipo === 'UVA';
+    const isVino     = tipo === 'VINO';
     const isMosto    = tipo === 'MOSTO';
     const abvGroup   = document.getElementById('calc-precio-abv-group');
     const mostoNote  = document.getElementById('calc-mosto-note');
     const uvaNote    = document.getElementById('calc-uva-note');
     const unitGroup  = document.getElementById('calc-precio-unit-group');
     const grapeTypeGroup = document.getElementById('calc-precio-grape-type-group');
+    const wineTypeGroup  = document.getElementById('calc-precio-wine-type-group');
     const variedadGroup  = document.getElementById('calc-precio-variedad-group');
     const unitSel    = document.getElementById('calc-precio-unit');
     const qtyLabel   = document.getElementById('calc-precio-qty-label');
@@ -2825,8 +2861,9 @@
 
     unitGroup.style.display = isUva ? 'none' : '';
     grapeTypeGroup.style.display = isUva ? '' : 'none';
+    wineTypeGroup.style.display = isVino ? '' : 'none';
     variedadGroup.style.display = isUva ? '' : 'none';
-    abvGroup.style.display = (isMosto || isUva) ? 'none' : '';
+    abvGroup.style.display = isVino ? '' : 'none';
     mostoNote.style.display = isMosto ? '' : 'none';
     uvaNote.style.display = isUva ? '' : 'none';
 
@@ -2882,28 +2919,160 @@
     document.body.style.overflow = '';
   }
 
+  // ── Formulario: Añadir datos ─────────────────────────────────────────────────
+  const MOSTO_VARIEDADES = [
+    'Mosto Concentrado Blanco',
+    'Mosto Concentrado Tinto',
+    'Mosto Concentrado Rectificado (MCR)',
+    'Mostos Azufrados',
+    'Mostos Ecológicos',
+  ];
+
+  function onFieldTipoChange() {
+    const tipo             = document.getElementById('field-tipo').value;
+    const isUva             = tipo === 'UVA';
+    const isVino             = tipo === 'VINO';
+    const isMosto            = tipo === 'MOSTO';
+    const grapeTypeGroup    = document.getElementById('field-grape-type-group');
+    const wineTypeGroup     = document.getElementById('field-wine-type-group');
+    const variedadGroup     = document.getElementById('field-variedad-group');
+    const graduacionGroup   = document.getElementById('field-graduacion-group');
+    const grapeTypeSelect   = document.getElementById('field-grape-type');
+    const wineTypeSelect    = document.getElementById('field-wine-type');
+    const variedadInput     = document.getElementById('field-variedad');
+    const graduacionInput   = document.getElementById('field-graduacion');
+    const cantidadLabel     = document.getElementById('field-cantidad-label');
+    const cantidadInput     = document.getElementById('field-cantidad');
+
+    grapeTypeGroup.style.display  = isUva ? '' : 'none';
+    wineTypeGroup.style.display   = isVino ? '' : 'none';
+    variedadGroup.style.display   = (isUva || isVino || isMosto) ? '' : 'none';
+    graduacionGroup.style.display = isVino ? '' : 'none';
+
+    grapeTypeSelect.required = isUva;
+    wineTypeSelect.required  = isVino;
+    variedadInput.required   = false;
+    graduacionInput.required = isVino;
+
+    cantidadLabel.textContent  = isUva ? 'Cantidad vendida (kg)' : 'Cantidad vendida (hl)';
+    cantidadInput.placeholder  = isUva ? 'ej. 5000' : 'ej. 150';
+
+    populateFieldVariedadList();
+  }
+
+  function populateFieldVariedadList() {
+    const tipo = document.getElementById('field-tipo').value;
+    const list = document.getElementById('field-variedad-list');
+    if (!list) return;
+
+    if (tipo === 'UVA') {
+      const grapeType = document.getElementById('field-grape-type').value;
+      const varieties = [...new Set(allUvaData.filter(d => d.grape_type === grapeType).map(d => d.grape_subtype))]
+        .filter(v => v !== 'SIN ESPECIFICAR')
+        .sort((a, b) => a.localeCompare(b, 'es'));
+      list.innerHTML = varieties.map(v => `<option value="${v}"></option>`).join('');
+    } else if (tipo === 'MOSTO') {
+      list.innerHTML = MOSTO_VARIEDADES.map(v => `<option value="${v}"></option>`).join('');
+    } else {
+      list.innerHTML = '';
+    }
+  }
+
   // ── Envío del formulario ──────────────────────────────────────────────────────
+  function getISOWeek(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return { week, year: date.getUTCFullYear() };
+  }
+
   function handleFormSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('btn-submit');
     btn.disabled = true;
     btn.textContent = 'Enviando…';
 
-    const payload = {
-      fecha:        document.getElementById('field-fecha').value,
-      wine_type:    document.getElementById('field-tipo').value,
-      quantity_hl:  parseFloat(document.getElementById('field-hl').value),
-      abv:          parseFloat(document.getElementById('field-graduacion').value),
-      cooperativa:  document.getElementById('field-cooperativa').value.trim(),
-      price_total:  parseFloat(document.getElementById('field-precio').value),
-    };
+    const tipo        = document.getElementById('field-tipo').value;
+    const variedad     = document.getElementById('field-variedad').value.trim();
+    const fecha        = document.getElementById('field-fecha').value;
+    const { week, year } = getISOWeek(fecha);
+    const cooperativa  = document.getElementById('field-cooperativa').value.trim();
+    const priceTotal   = parseFloat(document.getElementById('field-precio').value);
+    const quantity     = parseFloat(document.getElementById('field-cantidad').value);
+    const unitPrice    = (quantity > 0 && !isNaN(priceTotal)) ? priceTotal / quantity : null;
+
+    let payload;
+    let sheetRow;
+
+    if (tipo === 'UVA') {
+      const grapeType = document.getElementById('field-grape-type').value;
+      payload = {
+        fecha, wine_type: 'UVA', grape_type: grapeType, grape_subtype: variedad || null,
+        quantity_kg: quantity, cooperativa, price_total: priceTotal,
+      };
+      sheetRow = {
+        week, year,
+        grape_type:    grapeType,
+        grape_subtype: variedad || 'SIN ESPECIFICAR',
+        eur_kg:        unitPrice,
+        source:        cooperativa,
+        total_price:    priceTotal,
+        total_quantity: quantity,
+      };
+    } else if (tipo === 'VINO') {
+      const wineType = document.getElementById('field-wine-type').value;
+      const abv      = parseFloat(document.getElementById('field-graduacion').value);
+      payload = {
+        fecha, wine_type: wineType, variedad: variedad || null,
+        quantity_hl: quantity, abv, cooperativa, price_total: priceTotal,
+      };
+      sheetRow = {
+        week, year,
+        wine_type:     wineType,
+        abv:           abv,
+        price_eur_hl:  unitPrice,
+        price_eur_hg:  (unitPrice !== null && abv > 0) ? unitPrice / abv : '',
+        grape_subtype: variedad || '',
+        source:        cooperativa,
+        total_price:    priceTotal,
+        total_quantity: quantity,
+      };
+    } else {
+      payload = {
+        fecha, wine_type: 'MOSTO', variedad: variedad || null,
+        quantity_hl: quantity, cooperativa, price_total: priceTotal,
+      };
+      sheetRow = {
+        week, year,
+        wine_type:     'MOSTO',
+        abv:           0,
+        price_eur_hl:  unitPrice,
+        price_eur_hg:  'Precio Estimado',
+        grape_subtype: variedad || '',
+        source:        cooperativa,
+        total_price:    priceTotal,
+        total_quantity: quantity,
+      };
+    }
 
     console.log('Datos a enviar:', payload);
+    console.log('Fila para "Desde Vinexia":', sheetRow);
 
-    // Simulación de envío (aquí se conectaría con Supabase insert)
+    // Envío a Google Sheets vía Apps Script Web App (ver wine-agent/apps_script/desde_vinexia_webapp.gs).
+    // Se usa un body de texto plano (sin header Content-Type) para evitar el preflight CORS que
+    // los Web Apps de Apps Script no manejan bien; Apps Script igual lo parsea como JSON.
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ token: APPS_SCRIPT_TOKEN, row: sheetRow }),
+    }).catch(err => console.error('Error enviando a Google Sheets:', err));
+
     setTimeout(() => {
       document.getElementById('form-success').classList.add('visible');
       document.getElementById('datos-form').reset();
+      onFieldTipoChange();
       btn.textContent = 'Enviar datos';
       btn.disabled = false;
     }, 800);
